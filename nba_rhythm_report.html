@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Rhythm Report | Offensive & Defensive Trends</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Source+Sans+3:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-deep: #0a0c10;
+            --bg-card: #12151c;
+            --bg-elevated: #1a1e28;
+            --accent-gold: #d4a853;
+            --accent-gold-dim: #8a6f3a;
+            --accent-blue: #4a9eff;
+            --accent-red: #ff6b6b;
+            --accent-green: #4ade80;
+            --text-primary: #f0f0f0;
+            --text-secondary: #8a8f9d;
+            --text-muted: #5a5f6d;
+            --border-subtle: rgba(255,255,255,0.06);
+            --gradient-hero: linear-gradient(135deg, #0a0c10 0%, #1a1525 50%, #0a0c10 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-deep);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            margin-bottom: 3rem;
+            letter-spacing: 0.1em;
+        }
+
+        .loading-court {
+            position: relative;
+            width: 200px;
+            height: 120px;
+            margin-bottom: 2rem;
+        }
+
+        .court-outline {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid var(--accent-gold-dim);
+            border-radius: 4px;
+        }
+
+        .court-center {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--accent-gold-dim);
+            border-radius: 50%;
+        }
+
+        .basketball {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-gold);
+            border-radius: 50%;
+            top: 50%;
+            left: 10%;
+            transform: translateY(-50%);
+            animation: dribble 1.5s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(212, 168, 83, 0.4);
+        }
+
+        .basketball::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: var(--bg-deep);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .basketball::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background: var(--bg-deep);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        @keyframes dribble {
+            0%, 100% { left: 10%; transform: translateY(-50%) scale(1); }
+            25% { transform: translateY(-50%) scale(0.9, 1.1); }
+            50% { left: 80%; transform: translateY(-50%) scale(1); }
+            75% { transform: translateY(-50%) scale(0.9, 1.1); }
+        }
+
+        .loading-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: var(--gradient-hero);
+            min-height: 70vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 4rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at center, rgba(212, 168, 83, 0.03) 0%, transparent 50%);
+            animation: pulse-glow 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .hero-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.3em;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .hero-title span {
+            display: block;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: 2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hero-meta .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-gold);
+            border-radius: 50%;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .section-intro {
+            max-width: 800px;
+            margin: 0 auto 4rem;
+            text-align: center;
+        }
+
+        .section-intro h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .section-intro p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+
+        /* Category Cards */
+        .category-section {
+            margin-bottom: 6rem;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .category-section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .category-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent-gold-dim);
+            opacity: 0.5;
+        }
+
+        .category-title-group { flex: 1; }
+
+        .category-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .category-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Team Cards */
+        .team-cards { display: grid; gap: 2rem; }
+
+        .team-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .team-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .team-card-header {
+            padding: 1.5rem 2rem;
+            background: var(--bg-elevated);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .team-header-badges {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .archetype-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--bg-deep);
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-dim));
+            padding: 0.3rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .team-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .team-rank {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--accent-gold);
+            background: rgba(212, 168, 83, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            border: 1px solid rgba(212, 168, 83, 0.2);
+        }
+
+        .team-card-body { padding: 2rem; }
+
+        .team-narrative {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .team-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-box {
+            background: var(--bg-elevated);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value.positive { color: var(--accent-green); }
+        .stat-value.negative { color: var(--accent-red); }
+        .stat-value.neutral { color: var(--accent-blue); }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .chart-container {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 280px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 4rem 2rem;
+            border-top: 1px solid var(--border-subtle);
+            margin-top: 4rem;
+        }
+
+        .footer-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem;
+            color: var(--accent-gold);
+            margin-bottom: 1rem;
+        }
+
+        .footer-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Team Selector Section */
+        .team-selector-section {
+            margin-bottom: 4rem;
+        }
+
+        .team-selector-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .team-selector-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .team-selector-header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .team-selector-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .team-dropdown {
+            appearance: none;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1rem 3rem 1rem 1.5rem;
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            min-width: 320px;
+            transition: all 0.3s ease;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238a8f9d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.2rem;
+        }
+
+        .team-dropdown:hover {
+            border-color: var(--accent-gold-dim);
+        }
+
+        .team-dropdown:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.15);
+        }
+
+        .team-dropdown option {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            padding: 0.5rem;
+        }
+
+        .selected-team-card {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+            animation: slideDown 0.4s ease;
+        }
+
+        .selected-team-card.hidden {
+            display: none;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-divider {
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-subtle), transparent);
+            margin: 4rem 0;
+        }
+
+        /* Overlay Controls */
+        .overlay-controls {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .overlay-toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .overlay-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .overlay-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .overlay-btn:hover {
+            border-color: var(--accent-gold-dim);
+        }
+
+        .overlay-btn[data-enabled="true"] {
+            background: var(--accent-gold);
+            color: var(--bg-deep);
+            border-color: var(--accent-gold);
+        }
+
+        .overlay-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            padding-left: 1rem;
+            border-left: 1px solid var(--border-subtle);
+        }
+
+        .overlay-option-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .toggle-buttons {
+            display: flex;
+            gap: 0.25rem;
+            background: var(--bg-card);
+            border-radius: 6px;
+            padding: 0.25rem;
+        }
+
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-btn:hover {
+            color: var(--text-secondary);
+        }
+
+        .toggle-btn.active {
+            background: var(--accent-gold-dim);
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .overlay-controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .overlay-options {
+                padding-left: 0;
+                border-left: none;
+                padding-top: 1rem;
+                border-top: 1px solid var(--border-subtle);
+                width: 100%;
+            }
+        }
+
+        /* Error State */
+        .error-message {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .error-message h3 { color: var(--accent-red); margin-bottom: 0.5rem; }
+        .error-message p { color: var(--text-secondary); }
+        .error-message code {
+            background: var(--bg-elevated);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-meta { flex-direction: column; gap: 0.5rem; }
+            .category-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .team-card-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .team-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo">RHYTHM REPORT</div>
+        <div class="loading-court">
+            <div class="court-outline"></div>
+            <div class="court-center"></div>
+            <div class="basketball"></div>
+        </div>
+        <div class="loading-text">Loading analysis...</div>
+    </div>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="hero-label">Analytics Dashboard</div>
+        <h1 class="hero-title"><span>The Rhythm Report</span></h1>
+        <p class="hero-subtitle">
+            A deep dive into NBA offensive and defensive consistency. Which teams run like clockwork, 
+            and which ones ride the roller coaster?
+        </p>
+        <div class="hero-meta">
+            <span><span class="dot"></span> <span id="seasonLabel">Loading...</span></span>
+            <span><span class="dot"></span> <span id="gamesLabel">Loading...</span></span>
+            <span><span class="dot"></span> <span id="dateLabel">Loading...</span></span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <div class="section-intro">
+            <h2>Understanding the Numbers</h2>
+            <p>
+                We analyze each team's offensive and defensive ratings over a 10-game rolling window, 
+                measuring volatility through turning points and residual variance. A team that swings 
+                wildly between elite and poor performances tells a different story than one that 
+                steadily improves—or declines.
+            </p>
+        </div>
+
+        <!-- Team Selector -->
+        <div class="team-selector-section">
+            <div class="team-selector-header">
+                <h2>Explore Any Team</h2>
+                <p>Select a team to view their offensive and defensive trends</p>
+            </div>
+            <div class="team-selector-container">
+                <select id="teamSelector" class="team-dropdown">
+                    <option value="">— Select a team —</option>
+                </select>
+            </div>
+            <div id="selectedTeamCard" class="selected-team-card hidden"></div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <div id="categoriesContainer"></div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-brand">Rhythm Report</div>
+        <p class="footer-text">
+            Data sourced from NBA.com via nba_api<br>
+            Run <code>python fetch_nba_data.py</code> to refresh data
+        </p>
+    </footer>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            YMIN: 100,
+            YMAX: 130,
+            TOPK: 3,
+            DATA_FILE: 'nba_trends_data.json'
+        };
+
+        // Categories configuration
+        const CATEGORIES = [
+            {
+                key: 'mostInconsistentOverall',
+                title: 'The Roller Coasters',
+                subtitle: 'Most Inconsistent Overall',
+                description: 'Teams whose performance swings wildly from game to game, keeping fans on the edge of their seats.',
+                narrativeTemplate: (team, rank) => {
+                    const severity = rank === 1 ? 'the most unpredictable' : 'one of the most volatile';
+                    return `The ${team.name} are ${severity} team in the league this season. Their game-to-game swings in both offensive and defensive efficiency suggest a team still searching for identity. With an inconsistency score of ${team.overallInconsistency.toFixed(2)}, watching them is never boring—but rarely comfortable.`;
+                },
+                sort: (a, b) => b.overallInconsistency - a.overallInconsistency
+            },
+            {
+                key: 'topOffenseInconsistent',
+                title: 'Feast or Famine',
+                subtitle: 'Inconsistent Top Offenses',
+                description: 'Elite offensive teams that can\'t seem to find consistency—brilliant one night, baffling the next.',
+                narrativeTemplate: (team, rank) => {
+                    return `The ${team.name} possess one of the league's most potent offenses, averaging ${team.offLevel.toFixed(1)} points per 100 possessions. However, their offensive rhythm is erratic—capable of explosive performances but equally prone to mysterious cold spells.`;
+                },
+                filter: (teams) => {
+                    const q75 = percentile(teams.map(t => t.offLevel), 75);
+                    return teams.filter(t => t.offLevel >= q75);
+                },
+                sort: (a, b) => b.offInconsistency - a.offInconsistency
+            },
+            {
+                key: 'bottomOffenseInconsistent',
+                title: 'Searching for Answers',
+                subtitle: 'Inconsistent Struggling Offenses',
+                description: 'Teams with already-weak offenses made worse by unpredictability—finding rhythm remains elusive.',
+                narrativeTemplate: (team, rank) => {
+                    return `Averaging just ${team.offLevel.toFixed(1)} points per 100 possessions, the ${team.name} already face an uphill battle offensively. Their inconsistency compounds the problem—unable to string together good performances even when they find something that works.`;
+                },
+                filter: (teams) => {
+                    const q25 = percentile(teams.map(t => t.offLevel), 25);
+                    return teams.filter(t => t.offLevel <= q25);
+                },
+                sort: (a, b) => b.offInconsistency - a.offInconsistency
+            },
+            {
+                key: 'bestDefenseInconsistent',
+                title: 'Defensive Enigmas',
+                subtitle: 'Inconsistent Elite Defenses',
+                description: 'Strong defensive teams that occasionally let their guard down—lapses in an otherwise stingy unit.',
+                narrativeTemplate: (team, rank) => {
+                    return `The ${team.name} have established themselves as a defensive force, holding opponents to just ${team.defLevel.toFixed(1)} points per 100 possessions. Yet their defensive intensity fluctuates more than expected from an elite unit.`;
+                },
+                filter: (teams) => {
+                    const q25 = percentile(teams.map(t => t.defLevel), 25);
+                    return teams.filter(t => t.defLevel <= q25);
+                },
+                sort: (a, b) => b.defInconsistency - a.defInconsistency
+            },
+            {
+                key: 'worstDefenseInconsistent',
+                title: 'Defensive Chaos',
+                subtitle: 'Inconsistent Porous Defenses',
+                description: 'Already-weak defenses made worse by unpredictability—opponents never know which version they\'ll face.',
+                narrativeTemplate: (team, rank) => {
+                    return `Surrendering ${team.defLevel.toFixed(1)} points per 100 possessions, the ${team.name} are among the league's weakest defensive teams. Their inconsistency means occasional competitive efforts are undone by complete breakdowns.`;
+                },
+                filter: (teams) => {
+                    const q75 = percentile(teams.map(t => t.defLevel), 75);
+                    return teams.filter(t => t.defLevel >= q75);
+                },
+                sort: (a, b) => b.defInconsistency - a.defInconsistency
+            },
+            {
+                key: 'bestImprovement',
+                title: 'Rising Tides',
+                subtitle: 'Best Overall Improvement',
+                description: 'Teams trending in the right direction on both ends—building momentum as the season progresses.',
+                narrativeTemplate: (team, rank) => {
+                    const offTrend = team.offSlope > 0 ? 'improving' : 'declining';
+                    const defTrend = team.defSlope < 0 ? 'tightening up' : 'loosening';
+                    return `The ${team.name} are the season's feel-good story. Their offense is ${offTrend} at ${(team.offSlope * 10).toFixed(2)} points per 10 games, while their defense is ${defTrend}. This combined trajectory suggests a team hitting its stride.`;
+                },
+                sort: (a, b) => b.overallImprovement - a.overallImprovement
+            },
+            {
+                key: 'bestOffensiveImprovement',
+                title: 'Offensive Surge',
+                subtitle: 'Best Offensive Improvement',
+                description: 'Teams whose scoring machines are heating up—finding rhythm and chemistry as the season unfolds.',
+                narrativeTemplate: (team, rank) => {
+                    return `The ${team.name}'s offense is on a tear, improving at a rate of ${(team.offSlope * 10).toFixed(2)} points per 100 possessions every 10 games. Whether through personnel changes or gelling chemistry, their attack has become increasingly lethal.`;
+                },
+                sort: (a, b) => b.offSlope - a.offSlope
+            },
+            {
+                key: 'bestDefensiveImprovement',
+                title: 'Defensive Awakening',
+                subtitle: 'Best Defensive Improvement',
+                description: 'Teams locking down as the season progresses—defensive identity crystallizing with each game.',
+                narrativeTemplate: (team, rank) => {
+                    return `The ${team.name} have undergone a defensive transformation, tightening the screws at a rate of ${(-team.defSlope * 10).toFixed(2)} points per 100 possessions every 10 games. What was once a liability is becoming a strength.`;
+                },
+                sort: (a, b) => a.defSlope - b.defSlope
+            },
+            {
+                key: 'worstImprovement',
+                title: 'Troubling Trajectories',
+                subtitle: 'Steepest Decline',
+                description: 'Teams heading in the wrong direction—warning signs flashing for concerned fanbases.',
+                narrativeTemplate: (team, rank) => {
+                    return `The ${team.name} face a concerning trend. Their overall trajectory shows decline on both ends of the floor, with an improvement score of ${team.overallImprovement.toFixed(2)}. Whether due to injuries, fatigue, or internal issues, the numbers paint a picture of regression.`;
+                },
+                sort: (a, b) => a.overallImprovement - b.overallImprovement
+            }
+        ];
+
+        // Utility functions
+        function percentile(arr, p) {
+            const sorted = [...arr].sort((a, b) => a - b);
+            const idx = (p / 100) * (sorted.length - 1);
+            const lower = Math.floor(idx);
+            const upper = Math.ceil(idx);
+            if (lower === upper) return sorted[lower];
+            return sorted[lower] * (upper - idx) + sorted[upper] * (idx - lower);
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingScreen').classList.add('hidden');
+        }
+
+        function showError(message) {
+            hideLoading();
+            document.getElementById('categoriesContainer').innerHTML = `
+                <div class="error-message">
+                    <h3>Unable to Load Data</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        // Store global data for team selector
+        let globalTeamsData = null;
+        let selectedTeamChart = null;
+
+        function populateTeamSelector(teams) {
+            const selector = document.getElementById('teamSelector');
+            const sortedTeams = [...teams].sort((a, b) => a.name.localeCompare(b.name));
+            
+            sortedTeams.forEach(team => {
+                const option = document.createElement('option');
+                option.value = team.name;
+                option.textContent = team.name;
+                selector.appendChild(option);
+            });
+
+            selector.addEventListener('change', (e) => {
+                const teamName = e.target.value;
+                if (teamName) {
+                    const team = teams.find(t => t.name === teamName);
+                    if (team) showSelectedTeam(team);
+                } else {
+                    hideSelectedTeam();
+                }
+            });
+        }
+
+        function hideSelectedTeam() {
+            const container = document.getElementById('selectedTeamCard');
+            container.classList.add('hidden');
+            container.innerHTML = '';
+            if (selectedTeamChart) {
+                selectedTeamChart.destroy();
+                selectedTeamChart = null;
+            }
+        }
+
+        // Current overlay state for selected team
+        let currentOverlayState = {
+            enabled: false,
+            type: 'offense',
+            mode: 'statistical'
+        };
+
+        function getLeagueStats(type) {
+            if (!globalTeamsData) return null;
+            const key = type === 'offense' ? 'offLevel' : 'defLevel';
+            const values = globalTeamsData.map(t => t[key]);
+            return {
+                max: Math.max(...values),
+                min: Math.min(...values),
+                mean: values.reduce((a, b) => a + b, 0) / values.length
+            };
+        }
+
+        function getExtremeTeams(type) {
+            if (!globalTeamsData) return null;
+            const key = type === 'offense' ? 'offLevel' : 'defLevel';
+            const sorted = [...globalTeamsData].sort((a, b) => b[key] - a[key]);
+            
+            // For defense, lower is better, so flip
+            const best = type === 'offense' ? sorted[0] : sorted[sorted.length - 1];
+            const worst = type === 'offense' ? sorted[sorted.length - 1] : sorted[0];
+            
+            // Find team closest to mean
+            const values = globalTeamsData.map(t => t[key]);
+            const mean = values.reduce((a, b) => a + b, 0) / values.length;
+            const meanTeam = globalTeamsData.reduce((closest, t) => 
+                Math.abs(t[key] - mean) < Math.abs(closest[key] - mean) ? t : closest
+            );
+            
+            return { max: best, min: worst, mean: meanTeam };
+        }
+
+        function updateSelectedTeamChart(team) {
+            if (selectedTeamChart) {
+                selectedTeamChart.destroy();
+                selectedTeamChart = null;
+            }
+
+            let overlayConfig = null;
+            if (currentOverlayState.enabled) {
+                if (currentOverlayState.mode === 'statistical') {
+                    overlayConfig = {
+                        enabled: true,
+                        type: currentOverlayState.type,
+                        mode: 'statistical',
+                        stats: getLeagueStats(currentOverlayState.type)
+                    };
+                } else {
+                    overlayConfig = {
+                        enabled: true,
+                        type: currentOverlayState.type,
+                        mode: 'teams',
+                        teams: getExtremeTeams(currentOverlayState.type)
+                    };
+                }
+            }
+
+            selectedTeamChart = createChartAndReturn('selectedTeamChart', team, overlayConfig);
+        }
+
+        function showSelectedTeam(team) {
+            const container = document.getElementById('selectedTeamCard');
+            
+            // Reset overlay state
+            currentOverlayState = { enabled: false, type: 'offense', mode: 'statistical' };
+            
+            // Destroy previous chart if exists
+            if (selectedTeamChart) {
+                selectedTeamChart.destroy();
+                selectedTeamChart = null;
+            }
+
+            const offTrendClass = team.offSlope > 0.05 ? 'positive' : team.offSlope < -0.05 ? 'negative' : 'neutral';
+            const defTrendClass = team.defSlope < -0.05 ? 'positive' : team.defSlope > 0.05 ? 'negative' : 'neutral';
+
+            // Determine team's story
+            let narrative = '';
+            if (team.overallInconsistency > 1) {
+                narrative = `The ${team.name} have been one of the more unpredictable teams this season, with significant swings in both offensive and defensive performance.`;
+            } else if (team.overallInconsistency < -1) {
+                narrative = `The ${team.name} have been remarkably consistent this season, delivering steady performances on both ends of the floor.`;
+            } else if (team.overallImprovement > 1) {
+                narrative = `The ${team.name} are trending upward, showing improvement in their overall play as the season progresses.`;
+            } else if (team.overallImprovement < -1) {
+                narrative = `The ${team.name} have struggled to maintain their early-season form, with concerning trends on both ends.`;
+            } else {
+                narrative = `The ${team.name} have maintained a relatively steady trajectory this season, with moderate fluctuations in performance.`;
+            }
+
+            container.innerHTML = `
+                <div class="team-card-header">
+                    <h3 class="team-name">${team.name}</h3>
+                    <div class="team-header-badges">
+                        ${team.archetype ? `<span class="archetype-badge">${team.archetype}</span>` : ''}
+                        <span class="team-rank">${team.games} of 82 games</span>
+                    </div>
+                </div>
+                <div class="team-card-body">
+                    <p class="team-narrative">${narrative}</p>
+                    <div class="team-stats">
+                        <div class="stat-box">
+                            <div class="stat-value neutral">${team.offLevel.toFixed(1)}</div>
+                            <div class="stat-label">Avg Off Rtg</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value neutral">${team.defLevel.toFixed(1)}</div>
+                            <div class="stat-label">Avg Def Rtg</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value ${team.offRugosity ? (team.offRugosity > 1.35 ? 'negative' : team.offRugosity < 1.15 ? 'positive' : 'neutral') : 'neutral'}">${team.offRugosity ? team.offRugosity.toFixed(3) : 'N/A'}</div>
+                            <div class="stat-label">Off Rugosity</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value ${team.defRugosity ? (team.defRugosity > 1.35 ? 'negative' : team.defRugosity < 1.15 ? 'positive' : 'neutral') : 'neutral'}">${team.defRugosity ? team.defRugosity.toFixed(3) : 'N/A'}</div>
+                            <div class="stat-label">Def Rugosity</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value ${offTrendClass}">${team.offSlope > 0 ? '+' : ''}${(team.offSlope * 10).toFixed(2)}</div>
+                            <div class="stat-label">Off Trend/10g</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value ${defTrendClass}">${team.defSlope > 0 ? '+' : ''}${(team.defSlope * 10).toFixed(2)}</div>
+                            <div class="stat-label">Def Trend/10g</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Overlay Controls -->
+                    <div class="overlay-controls">
+                        <div class="overlay-toggle-group">
+                            <label class="overlay-label">Compare to League:</label>
+                            <button class="overlay-btn" id="overlayToggleBtn" data-enabled="false">Off</button>
+                        </div>
+                        <div class="overlay-options" id="overlayOptions" style="display: none;">
+                            <div class="overlay-option-group">
+                                <label class="overlay-label">Metric:</label>
+                                <div class="toggle-buttons">
+                                    <button class="toggle-btn active" data-type="offense">Offense</button>
+                                    <button class="toggle-btn" data-type="defense">Defense</button>
+                                </div>
+                            </div>
+                            <div class="overlay-option-group">
+                                <label class="overlay-label">Display:</label>
+                                <div class="toggle-buttons">
+                                    <button class="toggle-btn active" data-mode="statistical">Statistical Lines</button>
+                                    <button class="toggle-btn" data-mode="teams">Team Examples</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-wrapper">
+                            <canvas id="selectedTeamChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.classList.remove('hidden');
+
+            // Store reference to current team for chart updates
+            container.dataset.currentTeam = team.name;
+
+            // Setup overlay control listeners
+            const overlayToggleBtn = document.getElementById('overlayToggleBtn');
+            const overlayOptions = document.getElementById('overlayOptions');
+            
+            overlayToggleBtn.addEventListener('click', () => {
+                currentOverlayState.enabled = !currentOverlayState.enabled;
+                overlayToggleBtn.textContent = currentOverlayState.enabled ? 'On' : 'Off';
+                overlayToggleBtn.dataset.enabled = currentOverlayState.enabled;
+                overlayOptions.style.display = currentOverlayState.enabled ? 'flex' : 'none';
+                updateSelectedTeamChart(team);
+            });
+
+            // Type toggle (offense/defense)
+            document.querySelectorAll('[data-type]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentOverlayState.type = e.target.dataset.type;
+                    updateSelectedTeamChart(team);
+                });
+            });
+
+            // Mode toggle (statistical/teams)
+            document.querySelectorAll('[data-mode]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentOverlayState.mode = e.target.dataset.mode;
+                    updateSelectedTeamChart(team);
+                });
+            });
+
+            // Create chart after DOM update
+            requestAnimationFrame(() => {
+                selectedTeamChart = createChartAndReturn('selectedTeamChart', team, null);
+            });
+        }
+
+        function createChartAndReturn(canvasId, teamData, overlayConfig = null) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            // Build datasets
+            const datasets = [];
+            
+            // Smoothed data (main lines)
+            datasets.push({
+                label: 'Offensive Rating',
+                data: teamData.offSmooth,
+                borderColor: '#4a9eff',
+                borderWidth: 2.5,
+                tension: 0.3,
+                fill: false,
+                pointRadius: 0,
+                pointHoverRadius: 4
+            });
+            
+            datasets.push({
+                label: 'Defensive Rating',
+                data: teamData.defSmooth,
+                borderColor: '#ff6b6b',
+                borderWidth: 2.5,
+                tension: 0.3,
+                fill: false,
+                pointRadius: 0,
+                pointHoverRadius: 4
+            });
+            
+            // Trend lines
+            datasets.push({
+                label: 'Off Trend',
+                data: teamData.offTrend,
+                borderColor: 'rgba(74, 158, 255, 0.5)',
+                borderWidth: 1.5,
+                borderDash: [5, 5],
+                tension: 0,
+                fill: false,
+                pointRadius: 0
+            });
+            
+            datasets.push({
+                label: 'Def Trend',
+                data: teamData.defTrend,
+                borderColor: 'rgba(255, 107, 107, 0.5)',
+                borderWidth: 1.5,
+                borderDash: [5, 5],
+                tension: 0,
+                fill: false,
+                pointRadius: 0
+            });
+
+            // Add overlay datasets if configured
+            if (overlayConfig && overlayConfig.enabled) {
+                const overlayColor = overlayConfig.type === 'offense' ? '74, 158, 255' : '255, 107, 107';
+                
+                if (overlayConfig.mode === 'statistical') {
+                    // Statistical lines (horizontal lines across full 82 games)
+                    const fullSeasonX = Array.from({length: 82}, (_, i) => i + 1);
+                    
+                    datasets.push({
+                        label: `League Max ${overlayConfig.type === 'offense' ? 'Off' : 'Def'}`,
+                        data: fullSeasonX.map(() => overlayConfig.stats.max),
+                        borderColor: `rgba(${overlayColor}, 0.6)`,
+                        borderWidth: 1,
+                        borderDash: [2, 4],
+                        tension: 0,
+                        fill: false,
+                        pointRadius: 0
+                    });
+                    
+                    datasets.push({
+                        label: `League Mean ${overlayConfig.type === 'offense' ? 'Off' : 'Def'}`,
+                        data: fullSeasonX.map(() => overlayConfig.stats.mean),
+                        borderColor: `rgba(${overlayColor}, 0.8)`,
+                        borderWidth: 2,
+                        borderDash: [6, 3],
+                        tension: 0,
+                        fill: false,
+                        pointRadius: 0
+                    });
+                    
+                    datasets.push({
+                        label: `League Min ${overlayConfig.type === 'offense' ? 'Off' : 'Def'}`,
+                        data: fullSeasonX.map(() => overlayConfig.stats.min),
+                        borderColor: `rgba(${overlayColor}, 0.6)`,
+                        borderWidth: 1,
+                        borderDash: [2, 4],
+                        tension: 0,
+                        fill: false,
+                        pointRadius: 0
+                    });
+                } else if (overlayConfig.mode === 'teams') {
+                    // Actual team lines
+                    const dataKey = overlayConfig.type === 'offense' ? 'offSmooth' : 'defSmooth';
+                    
+                    if (overlayConfig.teams.max) {
+                        datasets.push({
+                            label: `Best: ${overlayConfig.teams.max.name}`,
+                            data: overlayConfig.teams.max[dataKey],
+                            borderColor: `rgba(${overlayColor}, 0.5)`,
+                            borderWidth: 1.5,
+                            tension: 0.3,
+                            fill: false,
+                            pointRadius: 0
+                        });
+                    }
+                    
+                    if (overlayConfig.teams.mean) {
+                        datasets.push({
+                            label: `Avg: ${overlayConfig.teams.mean.name}`,
+                            data: overlayConfig.teams.mean[dataKey],
+                            borderColor: `rgba(${overlayColor}, 0.7)`,
+                            borderWidth: 1.5,
+                            borderDash: [4, 2],
+                            tension: 0.3,
+                            fill: false,
+                            pointRadius: 0
+                        });
+                    }
+                    
+                    if (overlayConfig.teams.min) {
+                        datasets.push({
+                            label: `Worst: ${overlayConfig.teams.min.name}`,
+                            data: overlayConfig.teams.min[dataKey],
+                            borderColor: `rgba(${overlayColor}, 0.5)`,
+                            borderWidth: 1.5,
+                            tension: 0.3,
+                            fill: false,
+                            pointRadius: 0
+                        });
+                    }
+                }
+            }
+            
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 82}, (_, i) => i + 1),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#8a8f9d',
+                                font: { family: "'JetBrains Mono', monospace", size: 11 },
+                                usePointStyle: true,
+                                padding: 20,
+                                filter: (item) => !item.text.includes('Trend') && !item.text.includes('League')
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1a1e28',
+                            titleColor: '#f0f0f0',
+                            bodyColor: '#8a8f9d',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                title: (items) => `Game ${items[0].label}`,
+                                label: (item) => {
+                                    if (item.dataset.label.includes('Trend')) return null;
+                                    if (item.raw === undefined || item.raw === null) return null;
+                                    const label = item.dataset.label.includes('raw') 
+                                        ? item.dataset.label.replace(' (raw)', '') 
+                                        : item.dataset.label;
+                                    return `${label}: ${item.raw.toFixed(1)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            min: 1,
+                            max: 82,
+                            grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false },
+                            ticks: { 
+                                color: '#5a5f6d', 
+                                font: { family: "'JetBrains Mono', monospace", size: 10 },
+                                stepSize: 10
+                            },
+                            title: { display: true, text: 'Game Number', color: '#5a5f6d' }
+                        },
+                        y: {
+                            min: CONFIG.YMIN,
+                            max: CONFIG.YMAX,
+                            grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false },
+                            ticks: { color: '#5a5f6d', font: { family: "'JetBrains Mono', monospace", size: 10 } },
+                            title: { display: true, text: 'Rating (per 100 poss)', color: '#5a5f6d' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createChart(canvasId, teamData) {
+            createChartAndReturn(canvasId, teamData);
+        }
+
+        function renderCategories(data) {
+            const container = document.getElementById('categoriesContainer');
+            let html = '';
+            let chartIndex = 0;
+            const chartsToCreate = [];
+
+            CATEGORIES.forEach((category, catIdx) => {
+                let filteredTeams = [...data.teams];
+                
+                if (category.filter) {
+                    filteredTeams = category.filter(filteredTeams);
+                }
+                
+                filteredTeams.sort(category.sort);
+                const topTeams = filteredTeams.slice(0, CONFIG.TOPK);
+
+                if (topTeams.length === 0) return;
+
+                html += `
+                    <section class="category-section" data-category="${catIdx}">
+                        <div class="category-header">
+                            <span class="category-number">${String(catIdx + 1).padStart(2, '0')}</span>
+                            <div class="category-title-group">
+                                <h2 class="category-title">${category.title}</h2>
+                                <p class="category-description">${category.description}</p>
+                            </div>
+                        </div>
+                        <div class="team-cards">
+                `;
+
+                topTeams.forEach((team, rank) => {
+                    const chartId = `chart-${chartIndex++}`;
+                    chartsToCreate.push({ id: chartId, data: team });
+
+                    const offTrendClass = team.offSlope > 0.05 ? 'positive' : team.offSlope < -0.05 ? 'negative' : 'neutral';
+                    const defTrendClass = team.defSlope < -0.05 ? 'positive' : team.defSlope > 0.05 ? 'negative' : 'neutral';
+
+                    html += `
+                        <article class="team-card">
+                            <div class="team-card-header">
+                                <h3 class="team-name">${team.name}</h3>
+                                <span class="team-rank">#${rank + 1} in category</span>
+                            </div>
+                            <div class="team-card-body">
+                                <p class="team-narrative">${category.narrativeTemplate(team, rank + 1)}</p>
+                                <div class="team-stats">
+                                    <div class="stat-box">
+                                        <div class="stat-value neutral">${team.offLevel.toFixed(1)}</div>
+                                        <div class="stat-label">Avg Off Rtg</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-value neutral">${team.defLevel.toFixed(1)}</div>
+                                        <div class="stat-label">Avg Def Rtg</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-value ${offTrendClass}">${team.offSlope > 0 ? '+' : ''}${(team.offSlope * 10).toFixed(2)}</div>
+                                        <div class="stat-label">Off Trend/10g</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-value ${defTrendClass}">${team.defSlope > 0 ? '+' : ''}${(team.defSlope * 10).toFixed(2)}</div>
+                                        <div class="stat-label">Def Trend/10g</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-value neutral">${team.games}</div>
+                                        <div class="stat-label">Games</div>
+                                    </div>
+                                </div>
+                                <div class="chart-container">
+                                    <div class="chart-wrapper">
+                                        <canvas id="${chartId}"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    `;
+                });
+
+                html += `</div></section>`;
+            });
+
+            container.innerHTML = html;
+
+            requestAnimationFrame(() => {
+                chartsToCreate.forEach(({ id, data }) => createChart(id, data));
+
+                const sections = document.querySelectorAll('.category-section');
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) entry.target.classList.add('visible');
+                    });
+                }, { threshold: 0.1 });
+
+                sections.forEach(section => observer.observe(section));
+            });
+        }
+
+        // Main
+        async function main() {
+            try {
+                const response = await fetch(CONFIG.DATA_FILE);
+                if (!response.ok) throw new Error(`Could not load ${CONFIG.DATA_FILE}`);
+                
+                const data = await response.json();
+                
+                document.getElementById('seasonLabel').textContent = `${data.season} Season`;
+                document.getElementById('gamesLabel').textContent = `${data.teams.reduce((sum, t) => sum + t.games, 0)} games analyzed`;
+                document.getElementById('dateLabel').textContent = `Data from ${new Date(data.generated).toLocaleDateString()}`;
+
+                // Store global data and populate team selector
+                globalTeamsData = data.teams;
+                populateTeamSelector(data.teams);
+
+                hideLoading();
+                renderCategories(data);
+                
+            } catch (error) {
+                showError(`
+                    Could not load <code>${CONFIG.DATA_FILE}</code><br><br>
+                    Make sure you've run <code>python fetch_nba_data.py</code> first,<br>
+                    and that the JSON file is in the same folder as this HTML file.
+                `);
+            }
+        }
+
+        window.addEventListener('load', main);
+    </script>
+</body>
+</html>
