@@ -1,0 +1,5 @@
+To run this app, follow these steps:
+
+cd NBA_Trends
+conda activate rs_env
+python fetch_nba_data.py

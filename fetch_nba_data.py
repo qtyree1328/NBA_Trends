@@ -1,5 +1,3 @@
-# pip install nba_api pandas tqdm
-
 import json
 import time
 import numpy as np
@@ -12,7 +10,7 @@ from tqdm.auto import tqdm
 # PARAMETERS
 # ----------------------------
 SEASON = "2025-26"
-WINDOW = 10
+WINDOW = 7
 SEASON_TYPE = "Regular Season"
 SLEEP_BETWEEN_CALLS_SEC = 0.65
 
@@ -137,6 +135,17 @@ for t in pbar:
         off_rugosity = rugosity(off_ratings)
         def_rugosity = rugosity(def_ratings)
 
+        # Calculate last 20 games trend (or all games if less than 20)
+        last_n = min(20, games)
+        recent_off = off_smooth[-last_n:]
+        recent_def = def_smooth[-last_n:]
+        recent_games = list(range(1, last_n + 1))
+
+        recent_off_slope, _, _, _ = linear_regression(recent_games, recent_off)
+        recent_def_slope, _, _, _ = linear_regression(recent_games, recent_def)
+        # Combined trend: offense improving (positive) + defense improving (negative slope = good)
+        recent_trend_score = recent_off_slope - recent_def_slope
+
         teams_data.append({
             "name": team_name,
             "games": games,
@@ -157,6 +166,9 @@ for t in pbar:
             "defTurnsNorm": round(def_turns_norm, 4),
             "offRugosity": round(off_rugosity, 4),
             "defRugosity": round(def_rugosity, 4),
+            "recentOffSlope": round(recent_off_slope, 4),
+            "recentDefSlope": round(recent_def_slope, 4),
+            "recentTrendScore": round(recent_trend_score, 4),
         })
 
     except Exception as e:
@@ -169,7 +181,14 @@ for t in pbar:
 # ----------------------------
 print(f"\nProcessed {len(teams_data)} teams. Computing metrics...")
 
+# Initialize league medians for output
+league_medians = {}
+
 if len(teams_data) > 0:
+    # Calculate net rating for each team
+    for team in teams_data:
+        team["netRating"] = round(team["offLevel"] - team["defLevel"], 2)
+    
     # Extract arrays for z-score calculation
     off_resid_stds = [t["offResidStd"] for t in teams_data]
     def_resid_stds = [t["defResidStd"] for t in teams_data]
@@ -185,14 +204,58 @@ if len(teams_data) > 0:
     z_off_slope = zscore(off_slopes)
     z_def_slope = zscore(def_slopes)
     
-    # Calculate percentiles for classification
+    # Extract arrays for classification
     off_levels = [t["offLevel"] for t in teams_data]
     def_levels = [t["defLevel"] for t in teams_data]
+    net_ratings = [t["netRating"] for t in teams_data]
+    off_rugosities = [t["offRugosity"] for t in teams_data]
+    def_rugosities = [t["defRugosity"] for t in teams_data]
+    off_slope_vals = [t["offSlope"] for t in teams_data]
+    def_slope_vals = [t["defSlope"] for t in teams_data]
+
+    # ===========================================
+    # 4D MATRIX CLASSIFICATION SYSTEM
+    # ===========================================
+    # Dimensions: OffRating, DefRating, OffConsistency, DefConsistency
+    # Each dimension is binary: above/below median
+    # This creates 2^4 = 16 possible matrix cells
     
-    off_q25 = np.percentile(off_levels, 25)
-    off_q75 = np.percentile(off_levels, 75)
-    def_q25 = np.percentile(def_levels, 25)  # Lower is better for defense
-    def_q75 = np.percentile(def_levels, 75)
+    # Calculate medians for each dimension
+    off_median = np.median(off_levels)
+    def_median = np.median(def_levels)
+    off_rug_median = np.median(off_rugosities)
+    def_rug_median = np.median(def_rugosities)
+    off_slope_median = np.median(off_slope_vals)
+    def_slope_median = np.median(def_slope_vals)
+    
+    # Store league medians for visualization
+    league_medians = {
+        "offLevel": round(float(off_median), 2),
+        "defLevel": round(float(def_median), 2),
+        "offRugosity": round(float(off_rug_median), 4),
+        "defRugosity": round(float(def_rug_median), 4),
+        "offSlope": round(float(off_slope_median), 4),
+        "defSlope": round(float(def_slope_median), 4)
+    }
+    
+    # Calculate standard deviations for trend significance
+    off_slope_std = np.std(off_slope_vals)
+    def_slope_std = np.std(def_slope_vals)
+    
+    # Trend significance thresholds (1.0 std = significant, 1.5 std = overwhelming)
+    SIGNIFICANT_THRESHOLD = 1.0
+    OVERWHELMING_THRESHOLD = 1.5
+    
+    # Define tier boundaries
+    tier_definitions = [
+        ("Contenders", 6.0),
+        ("Legit Threats", 3.5),
+        ("Dangerous", 1.5),
+        ("Play-In", -1.5),
+        ("Up-and-Coming", -4.0),
+        ("Rebuild", -7.0),
+        ("Tank", float('-inf'))
+    ]
 
     for i, team in enumerate(teams_data):
         team["offInconsistency"] = round(z_off_resid[i] + z_off_turns[i], 4)
@@ -200,82 +263,202 @@ if len(teams_data) > 0:
         team["overallInconsistency"] = round(z_off_resid[i] + z_off_turns[i] + z_def_resid[i] + z_def_turns[i], 4)
         team["overallImprovement"] = round(z_off_slope[i] + z_def_slope[i], 4)
         
-        # Classify performance tiers
         off_level = team["offLevel"]
         def_level = team["defLevel"]
         off_rug = team["offRugosity"]
         def_rug = team["defRugosity"]
         off_slope = team["offSlope"]
         def_slope = team["defSlope"]
+        net_rating = team["netRating"]
         
-        # Performance classification
-        off_tier = "elite" if off_level >= off_q75 else ("poor" if off_level <= off_q25 else "average")
-        def_tier = "elite" if def_level <= def_q25 else ("poor" if def_level >= def_q75 else "average")
+        # Assign tier based on net rating
+        tier = "Tank"
+        for tier_name, threshold in tier_definitions:
+            if net_rating > threshold:
+                tier = tier_name
+                break
+        team["tier"] = tier
         
-        # Rugosity classification (thresholds based on typical NBA variance)
-        off_rug_tier = "consistent" if off_rug < 1.15 else ("volatile" if off_rug > 1.35 else "moderate")
-        def_rug_tier = "consistent" if def_rug < 1.15 else ("volatile" if def_rug > 1.35 else "moderate")
+        # ===========================================
+        # 4D MATRIX POSITION (binary for each dimension)
+        # ===========================================
+        # Offense: 1 = above median (good), 0 = below median
+        # Defense: 1 = below median (good, lower is better), 0 = above median
+        # Off Consistency: 1 = below median rugosity (consistent), 0 = above (volatile)
+        # Def Consistency: 1 = below median rugosity (consistent), 0 = above (volatile)
         
-        # Trend classification (per 10 games)
-        off_trend_tier = "improving" if off_slope > 0.075 else ("declining" if off_slope < -0.075 else "stable")
-        def_trend_tier = "improving" if def_slope < -0.075 else ("declining" if def_slope > 0.075 else "stable")
+        off_high = 1 if off_level >= off_median else 0
+        def_high = 1 if def_level <= def_median else 0  # Lower defense rating is better
+        off_consistent = 1 if off_rug <= off_rug_median else 0  # Lower rugosity = more consistent
+        def_consistent = 1 if def_rug <= def_rug_median else 0
         
-        team["offTier"] = off_tier
-        team["defTier"] = def_tier
-        team["offRugTier"] = off_rug_tier
-        team["defRugTier"] = def_rug_tier
-        team["offTrendTier"] = off_trend_tier
-        team["defTrendTier"] = def_trend_tier
+        # Store matrix position as binary string (e.g., "1101")
+        matrix_code = f"{off_high}{def_high}{off_consistent}{def_consistent}"
+        team["matrixCode"] = matrix_code
+        team["matrixPosition"] = {
+            "offHigh": off_high,
+            "defHigh": def_high,
+            "offConsistent": off_consistent,
+            "defConsistent": def_consistent
+        }
         
-        # Assign archetype (priority order)
-        archetype = "Unclassified"
+        # ===========================================
+        # TREND ANALYSIS (z-scores for significance)
+        # ===========================================
+        off_slope_z = (off_slope - off_slope_median) / off_slope_std if off_slope_std > 0 else 0
+        def_slope_z = -(def_slope - def_slope_median) / def_slope_std if def_slope_std > 0 else 0  # Negative because lower is better
         
-        # 1. The Machine - Elite both ends, both consistent
-        if off_tier == "elite" and def_tier == "elite" and off_rug_tier == "consistent" and def_rug_tier == "consistent":
-            archetype = "The Machine"
-        # 2. Streaky Contender - Elite both ends, either volatile
-        elif off_tier == "elite" and def_tier == "elite" and (off_rug_tier == "volatile" or def_rug_tier == "volatile"):
-            archetype = "Streaky Contender"
-        # 3. Fireworks Show - Elite offense, poor defense, volatile offense
-        elif off_tier == "elite" and def_tier == "poor" and off_rug_tier == "volatile":
-            archetype = "Fireworks Show"
-        # 4. Feast or Famine - Elite offense, volatile offense, consistent defense
-        elif off_tier == "elite" and off_rug_tier == "volatile" and def_rug_tier == "consistent":
-            archetype = "Feast or Famine"
-        # 5. Defensive Shell - Poor offense, elite defense, both consistent
-        elif off_tier == "poor" and def_tier == "elite" and off_rug_tier == "consistent" and def_rug_tier == "consistent":
-            archetype = "Defensive Shell"
-        # 6. Defensive Rollercoaster - Elite defense, volatile defense
-        elif def_tier == "elite" and def_rug_tier == "volatile":
-            archetype = "Defensive Rollercoaster"
-        # 7. Defensive Fortress - Elite defense, average offense, consistent
-        elif def_tier == "elite" and off_tier == "average" and off_rug_tier == "consistent":
-            archetype = "Defensive Fortress"
-        # 8. Steady Contender - Elite offense, average defense, consistent
-        elif off_tier == "elite" and def_tier == "average" and off_rug_tier == "consistent":
-            archetype = "Steady Contender"
-        # 9. Jekyll & Hyde - Both volatile
-        elif off_rug_tier == "volatile" and def_rug_tier == "volatile":
-            archetype = "Jekyll & Hyde"
-        # 10. Rising Tide - Both improving
-        elif off_trend_tier == "improving" and def_trend_tier == "improving":
-            archetype = "Rising Tide"
-        # 11. Falling Apart - Both declining
-        elif off_trend_tier == "declining" and def_trend_tier == "declining":
-            archetype = "Falling Apart"
-        # 12. One-Way Surge - Offense improving, defense stable
-        elif off_trend_tier == "improving" and def_trend_tier == "stable":
-            archetype = "One-Way Surge"
-        # 13. Defensive Awakening - Defense improving, offense stable
-        elif def_trend_tier == "improving" and off_trend_tier == "stable":
-            archetype = "Defensive Awakening"
-        # Fallback based on consistency
-        elif off_rug_tier == "consistent" and def_rug_tier == "consistent":
-            archetype = "Steady Mediocrity" if off_tier == "average" and def_tier == "average" else "Steady"
-        elif off_rug_tier == "volatile" or def_rug_tier == "volatile":
-            archetype = "Volatile Mediocrity" if off_tier == "average" and def_tier == "average" else "Volatile"
+        team["offSlopeZ"] = round(off_slope_z, 3)
+        team["defSlopeZ"] = round(def_slope_z, 3)
+        
+        # Determine trend significance
+        off_trend_sig = "none"
+        if abs(off_slope_z) >= OVERWHELMING_THRESHOLD:
+            off_trend_sig = "overwhelming"
+        elif abs(off_slope_z) >= SIGNIFICANT_THRESHOLD:
+            off_trend_sig = "significant"
+        
+        def_trend_sig = "none"
+        if abs(def_slope_z) >= OVERWHELMING_THRESHOLD:
+            def_trend_sig = "overwhelming"
+        elif abs(def_slope_z) >= SIGNIFICANT_THRESHOLD:
+            def_trend_sig = "significant"
+        
+        off_improving = off_slope_z > 0
+        def_improving = def_slope_z > 0
+        
+        team["offTrendSig"] = off_trend_sig
+        team["defTrendSig"] = def_trend_sig
+        team["offImproving"] = bool(off_improving)
+        team["defImproving"] = bool(def_improving)
+        
+        # ===========================================
+        # DYNAMIC LABEL GENERATION
+        # ===========================================
+        
+        # Base labels from 4D matrix (16 combinations)
+        MATRIX_LABELS = {
+            # off_high, def_high, off_consistent, def_consistent
+            "1111": "Elite Machine",           # Good offense, good defense, both consistent
+            "1110": "Elite but Shaky D",       # Good O, good D, consistent O, volatile D
+            "1101": "Streaky Juggernaut",      # Good O, good D, volatile O, consistent D
+            "1100": "Talented Chaos",          # Good O, good D, both volatile
+            "1011": "Offensive Engine",        # Good O, bad D, both consistent
+            "1010": "Offensive Engine, Leaky", # Good O, bad D, consistent O, volatile D
+            "1001": "Feast or Famine",         # Good O, bad D, volatile O, consistent D
+            "1000": "Shootout Specialists",    # Good O, bad D, both volatile
+            "0111": "Defensive Anchor",        # Bad O, good D, both consistent
+            "0110": "Grinders",                # Bad O, good D, consistent O, volatile D  
+            "0101": "Defensive Anchor, Streaky O", # Bad O, good D, volatile O, consistent D
+            "0100": "Defensive Chaos",         # Bad O, good D, both volatile
+            "0011": "Steady Mediocrity",       # Bad O, bad D, both consistent
+            "0010": "Consistently Inconsistent", # Bad O, bad D, consistent O, volatile D
+            "0001": "Struggling but Steady D", # Bad O, bad D, volatile O, consistent D
+            "0000": "Full Rebuild Mode",       # Bad O, bad D, both volatile
+        }
+        
+        base_label = MATRIX_LABELS.get(matrix_code, "Unclassified")
+        
+        # ===========================================
+        # TREND MODIFIERS (can override or append)
+        # ===========================================
+        
+        trend_modifier = ""
+        trend_override = None
+        
+        # Check for overwhelming trends (these override the base label)
+        if off_trend_sig == "overwhelming" and def_trend_sig == "overwhelming":
+            if off_improving and def_improving:
+                trend_override = "Rising Tide"
+            elif not off_improving and not def_improving:
+                trend_override = "Falling Apart"
+            elif off_improving and not def_improving:
+                trend_override = "Offensive Surge, Defensive Collapse"
+            else:
+                trend_override = "Defensive Surge, Offensive Collapse"
+        elif off_trend_sig == "overwhelming":
+            if off_improving:
+                trend_override = "Offensive Breakout"
+            else:
+                trend_override = "Offensive Freefall"
+        elif def_trend_sig == "overwhelming":
+            if def_improving:
+                trend_override = "Defensive Transformation"
+            else:
+                trend_override = "Defensive Meltdown"
+        
+        # Significant trends add modifiers (don't override)
+        if trend_override is None:
+            modifiers = []
+            if off_trend_sig == "significant":
+                if off_improving:
+                    modifiers.append("↑O")
+                else:
+                    modifiers.append("↓O")
+            if def_trend_sig == "significant":
+                if def_improving:
+                    modifiers.append("↑D")
+                else:
+                    modifiers.append("↓D")
+            
+            if modifiers:
+                trend_modifier = " (" + ", ".join(modifiers) + ")"
+        
+        # Final archetype assignment
+        if trend_override:
+            archetype = trend_override
+        else:
+            archetype = base_label + trend_modifier
         
         team["archetype"] = archetype
+        team["baseLabel"] = base_label
+        team["trendModifier"] = trend_modifier
+        team["trendOverride"] = trend_override is not None
+        
+        # Store tier classifications for reference
+        team["offTier"] = "high" if off_high else "low"
+        team["defTier"] = "high" if def_high else "low"
+        team["offRugTier"] = "consistent" if off_consistent else "volatile"
+        team["defRugTier"] = "consistent" if def_consistent else "volatile"
+        team["offTrendTier"] = "improving" if off_improving else "declining"
+        team["defTrendTier"] = "improving" if def_improving else "declining"
+
+    # ----------------------------
+    # Calculate League Awards
+    # ----------------------------
+
+    # Initialize awards for all teams
+    for team in teams_data:
+        team["awards"] = []
+
+    # Most Consistent: Lowest total rugosity (offense + defense)
+    most_consistent = min(teams_data, key=lambda t: t["offRugosity"] + t["defRugosity"])
+    most_consistent["awards"].append("most_consistent")
+
+    # Best Offense: Highest offensive rating adjusted by consistency
+    # Higher off rating is better, lower rugosity is better (subtract it)
+    best_offense = max(teams_data, key=lambda t: t["offLevel"] - (t["offRugosity"] * 0.5))
+    best_offense["awards"].append("best_offense")
+
+    # Best Defense: Lowest defensive rating adjusted by consistency
+    # Lower def rating is better, lower rugosity is better (add it as penalty)
+    best_defense = min(teams_data, key=lambda t: t["defLevel"] + (t["defRugosity"] * 0.5))
+    best_defense["awards"].append("best_defense")
+
+    # On the Rise: Highest recent trend score (last 20 games)
+    on_the_rise = max(teams_data, key=lambda t: t["recentTrendScore"])
+    on_the_rise["awards"].append("on_the_rise")
+
+    # On the Decline: Lowest recent trend score (last 20 games)
+    on_the_decline = min(teams_data, key=lambda t: t["recentTrendScore"])
+    on_the_decline["awards"].append("on_the_decline")
+
+    print(f"\n📊 League Awards:")
+    print(f"   Most Consistent: {most_consistent['name']}")
+    print(f"   Best Offense: {best_offense['name']}")
+    print(f"   Best Defense: {best_defense['name']}")
+    print(f"   On the Rise: {on_the_rise['name']}")
+    print(f"   On the Decline: {on_the_decline['name']}")
 
 # ----------------------------
 # Output JSON
@@ -284,6 +467,11 @@ output = {
     "season": SEASON,
     "generated": pd.Timestamp.now().isoformat(),
     "window": WINDOW,
+    "leagueMedians": league_medians,
+    "trendThresholds": {
+        "significant": 1.0,
+        "overwhelming": 1.5
+    },
     "teams": teams_data
 }
 

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -31,6 +31,7 @@
 
         html {
             scroll-behavior: smooth;
+            scroll-padding-top: 80px;
         }
 
         body {
@@ -67,12 +68,17 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 0.8s ease, visibility 0.8s ease;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
         }
 
         .loading-screen.hidden {
-            opacity: 0;
-            visibility: hidden;
+            display: none;
         }
 
         .loading-logo {
@@ -178,12 +184,6 @@
             width: 200%;
             height: 200%;
             background: radial-gradient(ellipse at center, rgba(212, 168, 83, 0.03) 0%, transparent 50%);
-            animation: pulse-glow 8s ease-in-out infinite;
-        }
-
-        @keyframes pulse-glow {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 1; }
         }
 
         .hero-label {
@@ -272,14 +272,117 @@
         /* Category Cards */
         .category-section {
             margin-bottom: 6rem;
-            opacity: 0;
-            transform: translateY(40px);
-            transition: opacity 0.8s ease, transform 0.8s ease;
         }
 
-        .category-section.visible {
-            opacity: 1;
-            transform: translateY(0);
+        /* Tier Introduction */
+        .tier-intro {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+        }
+
+        .tier-intro-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .tier-intro-description {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.7;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Methods Section */
+        .methods-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .methods-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .methods-content {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .methods-subsection {
+            margin-bottom: 2rem;
+        }
+
+        .methods-subsection:last-child {
+            margin-bottom: 0;
+        }
+
+        .methods-subtitle {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+            margin-bottom: 0.75rem;
+        }
+
+        .methods-text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .methods-formula {
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent-blue);
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .methods-formula-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+
+        .methods-list {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .methods-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        .methods-list code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-elevated);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--accent-gold);
         }
 
         .category-header {
@@ -289,14 +392,6 @@
             margin-bottom: 2rem;
             padding-bottom: 1rem;
             border-bottom: 1px solid var(--border-subtle);
-        }
-
-        .category-number {
-            font-family: 'Playfair Display', serif;
-            font-size: 3rem;
-            font-weight: 700;
-            color: var(--accent-gold-dim);
-            opacity: 0.5;
         }
 
         .category-title-group { flex: 1; }
@@ -312,6 +407,555 @@
         .category-description {
             color: var(--text-secondary);
             font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .tier-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: var(--bg-elevated);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        /* Fixed Navigation Bar */
+        .main-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0.5rem 1rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .main-nav-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .main-nav-divider {
+            width: 1px;
+            height: 24px;
+            background: var(--border-subtle);
+            flex-shrink: 0;
+        }
+
+        .main-nav-center {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .main-nav-item {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 0.4rem 0.75rem;
+            color: var(--text-secondary);
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .main-nav-item:hover {
+            border-color: var(--accent-gold-dim);
+            color: var(--text-primary);
+            background: rgba(212, 168, 83, 0.1);
+        }
+
+        .main-nav-item.active {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            background: rgba(212, 168, 83, 0.15);
+        }
+
+        .main-nav-item.nav-explore {
+            background: linear-gradient(135deg, rgba(212, 168, 83, 0.2), rgba(212, 168, 83, 0.1));
+            border-color: var(--accent-gold-dim);
+        }
+
+        .main-nav-item.nav-methods {
+            background: transparent;
+            border-color: var(--text-muted);
+        }
+
+        .main-nav-item.nav-methods:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            background: rgba(74, 158, 255, 0.1);
+        }
+
+        .main-nav-item.nav-matrix {
+            background: transparent;
+            border-color: var(--text-muted);
+        }
+
+        .main-nav-item.nav-matrix:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            background: rgba(74, 222, 128, 0.1);
+        }
+
+        /* Tier Dropdown */
+        .tier-dropdown-container {
+            position: relative;
+        }
+
+        .tier-dropdown-btn {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 0.4rem 0.75rem;
+            color: var(--text-secondary);
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+        }
+
+        .tier-dropdown-btn:hover {
+            border-color: var(--accent-gold-dim);
+            color: var(--text-primary);
+            background: rgba(212, 168, 83, 0.1);
+        }
+
+        .tier-dropdown-btn::after {
+            content: '▼';
+            font-size: 0.6rem;
+            margin-left: 0.25rem;
+        }
+
+        .tier-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 0.25rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 0.5rem 0;
+            min-width: 180px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            display: none;
+            z-index: 100;
+        }
+
+        .tier-dropdown-container.open .tier-dropdown-menu {
+            display: block;
+        }
+
+        .tier-dropdown-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .tier-dropdown-item:hover {
+            background: rgba(212, 168, 83, 0.1);
+            color: var(--text-primary);
+        }
+
+        .tier-dropdown-item .tier-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            background: rgba(255,255,255,0.1);
+            padding: 0.1rem 0.4rem;
+            border-radius: 10px;
+        }
+
+        .main-nav-right {
+            margin-left: auto;
+            display: flex;
+            gap: 0.4rem;
+            flex-shrink: 0;
+        }
+
+        /* Hide tier links on mobile, show dropdown */
+        .nav-tier-links {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        @media (max-width: 900px) {
+            .nav-tier-links {
+                display: none;
+            }
+            .tier-dropdown-container {
+                display: block;
+            }
+        }
+
+        @media (min-width: 901px) {
+            .tier-dropdown-container {
+                display: none;
+            }
+        }
+
+        /* Mobile nav adjustments */
+        @media (max-width: 600px) {
+            .main-nav {
+                padding: 0.5rem;
+                gap: 0.4rem;
+            }
+            .main-nav-brand {
+                font-size: 0.9rem;
+            }
+            .main-nav-divider {
+                display: none;
+            }
+            .main-nav-item {
+                padding: 0.35rem 0.5rem;
+                font-size: 0.75rem;
+            }
+            .tier-dropdown-btn {
+                padding: 0.35rem 0.5rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        .nav-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            background: rgba(255,255,255,0.1);
+            padding: 0.1rem 0.35rem;
+            border-radius: 10px;
+        }
+
+        /* Page Overlay (for Methods and Matrix) */
+        .page-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-deep);
+            z-index: 2000;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .page-overlay.active {
+            display: block;
+        }
+
+        .page-overlay-header {
+            position: sticky;
+            top: 0;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .page-overlay-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        .page-close-btn {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            color: var(--text-secondary);
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .page-close-btn:hover {
+            border-color: var(--accent-gold-dim);
+            color: var(--text-primary);
+            background: rgba(212, 168, 83, 0.1);
+        }
+
+        .page-overlay-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        /* Matrix Page Specific */
+        .matrix-page-content {
+            max-width: 1100px;
+        }
+
+        .matrix-intro {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .matrix-intro p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        .matrix-team-chip {
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .matrix-team-chip.tier-contenders { border-color: #ffd700; color: #ffd700; }
+        .matrix-team-chip.tier-legit { border-color: #4ade80; color: #4ade80; }
+        .matrix-team-chip.tier-dangerous { border-color: #4a9eff; color: #4a9eff; }
+        .matrix-team-chip.tier-playin { border-color: #a78bfa; color: #a78bfa; }
+        .matrix-team-chip.tier-upcoming { border-color: #f97316; color: #f97316; }
+        .matrix-team-chip.tier-rebuild { border-color: #94a3b8; color: #94a3b8; }
+        .matrix-team-chip.tier-tank { border-color: #ff6b6b; color: #ff6b6b; }
+
+        .matrix-explainer {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+        }
+
+        .matrix-explainer h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .matrix-explainer p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            margin-bottom: 0.75rem;
+        }
+
+        .matrix-explainer code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-elevated);
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--accent-gold);
+        }
+
+        .nav-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            background: rgba(255,255,255,0.1);
+            padding: 0.1rem 0.35rem;
+            border-radius: 10px;
+        }
+
+        /* Add top padding to main content to account for fixed nav */
+        main {
+            padding-top: 70px;
+        }
+
+        @media (max-width: 768px) {
+            .main-nav {
+                padding: 0.5rem 1rem;
+            }
+            .main-nav-brand {
+                font-size: 1rem;
+            }
+            main {
+                padding-top: 100px;
+            }
+        }
+
+        /* Highlighted stat box */
+        .stat-box.highlight {
+            background: linear-gradient(135deg, rgba(212, 168, 83, 0.15), rgba(212, 168, 83, 0.05));
+            border: 1px solid rgba(212, 168, 83, 0.3);
+        }
+
+        /* 4D Matrix Visualization */
+        .matrix-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .matrix-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .matrix-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .matrix-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .matrix-grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .matrix-grid-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .matrix-quadrant {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .matrix-quadrant-title {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .matrix-quadrant-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .matrix-cell-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .matrix-cell {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.75rem;
+            transition: all 0.2s ease;
+            cursor: default;
+        }
+
+        .matrix-cell:hover {
+            border-color: var(--accent-gold-dim);
+            transform: translateY(-2px);
+        }
+
+        .matrix-cell-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .matrix-cell-name {
+            color: var(--text-primary);
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            font-size: 0.8rem;
+        }
+
+        .matrix-cell-teams {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        .matrix-team-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            opacity: 0.7;
+        }
+
+        .matrix-team-dot.tier-contenders { background: #ffd700; }
+        .matrix-team-dot.tier-legit { background: #4ade80; }
+        .matrix-team-dot.tier-dangerous { background: #4a9eff; }
+        .matrix-team-dot.tier-playin { background: #a78bfa; }
+        .matrix-team-dot.tier-upcoming { background: #f97316; }
+        .matrix-team-dot.tier-rebuild { background: #94a3b8; }
+        .matrix-team-dot.tier-tank { background: #ff6b6b; }
+
+        .matrix-legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .matrix-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .matrix-axis-labels {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .matrix-axis-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            padding: 0.25rem 0.75rem;
+            background: var(--bg-elevated);
+            border-radius: 4px;
         }
 
         /* Team Cards */
@@ -409,6 +1053,173 @@
             letter-spacing: 0.03em;
         }
 
+        .tier-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        /* Award Badges */
+        .award-badge {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+            cursor: help;
+        }
+        .award-badge .award-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 0.6rem 0.8rem;
+            width: 220px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+            z-index: 100;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            text-align: left;
+        }
+        .award-badge:hover .award-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+        .award-tooltip-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            margin-bottom: 0.3rem;
+        }
+        .award-tooltip-formula {
+            font-size: 0.65rem;
+            font-family: 'SF Mono', monospace;
+            color: var(--accent-blue);
+            background: rgba(74, 158, 255, 0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            margin-bottom: 0.3rem;
+            display: inline-block;
+        }
+        .award-tooltip-desc {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+
+        .award-badge.most_consistent {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            color: #052e16;
+        }
+
+        .award-badge.best_offense {
+            background: linear-gradient(135deg, #4a9eff, #2563eb);
+            color: #1e1b4b;
+        }
+
+        .award-badge.best_defense {
+            background: linear-gradient(135deg, #f472b6, #db2777);
+            color: #4a0519;
+        }
+
+        .award-badge.on_the_rise {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #451a03;
+        }
+
+        .award-badge.on_the_decline {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            color: #f3f4f6;
+        }
+
+        /* Data page nav button */
+        .main-nav-item.nav-data {
+            background: transparent;
+            border-color: var(--text-muted);
+        }
+        .main-nav-item.nav-data:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            background: rgba(212, 168, 83, 0.1);
+        }
+
+        /* Data page rankings */
+        .data-rankings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .data-ranking-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .data-ranking-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .data-ranking-badge {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .data-ranking-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .data-ranking-formula {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: 'SF Mono', monospace;
+        }
+        .data-ranking-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .data-ranking-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.35rem 0;
+            font-size: 0.8rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .data-ranking-list li:last-child {
+            border-bottom: none;
+        }
+        .data-rank-num {
+            color: var(--text-muted);
+            width: 1.5rem;
+        }
+        .data-rank-team {
+            flex: 1;
+            color: var(--text-primary);
+        }
+        .data-rank-value {
+            color: var(--accent-gold);
+            font-family: 'SF Mono', monospace;
+        }
+
         .team-name {
             font-family: 'Playfair Display', serif;
             font-size: 1.5rem;
@@ -436,34 +1247,62 @@
 
         .team-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
             margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .team-stats {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .team-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         .stat-box {
             background: var(--bg-elevated);
-            padding: 1rem;
+            padding: 0.6rem 0.4rem;
             border-radius: 8px;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .stat-label {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 0.2rem;
+            order: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .stat-value {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             font-weight: 500;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.15rem;
+            order: 2;
         }
 
         .stat-value.positive { color: var(--accent-green); }
         .stat-value.negative { color: var(--accent-red); }
         .stat-value.neutral { color: var(--accent-blue); }
 
-        .stat-label {
-            font-size: 0.75rem;
+        .stat-ranking {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
             color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            order: 3;
         }
 
         .chart-container {
@@ -471,6 +1310,413 @@
             border-radius: 12px;
             padding: 1.5rem;
             margin-top: 1rem;
+            position: relative;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .chart-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .chart-action-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.75rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .chart-action-btn:hover {
+            border-color: var(--accent-gold-dim);
+            color: var(--text-primary);
+        }
+
+        /* Smooth curve toggle */
+        .smooth-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .smooth-toggle-label {
+            cursor: pointer;
+            user-select: none;
+        }
+        .smooth-toggle-switch {
+            position: relative;
+            width: 32px;
+            height: 18px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 9px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .smooth-toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 12px;
+            height: 12px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        .smooth-toggle input {
+            display: none;
+        }
+        .smooth-toggle input:checked + .smooth-toggle-switch {
+            background: rgba(74, 158, 255, 0.2);
+            border-color: var(--accent-blue);
+        }
+        .smooth-toggle input:checked + .smooth-toggle-switch::after {
+            left: 16px;
+            background: var(--accent-blue);
+        }
+
+        @media (max-width: 500px) {
+            .chart-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .chart-actions {
+                width: 100%;
+            }
+            .chart-action-btn {
+                flex: 1;
+                text-align: center;
+                padding: 0.5rem;
+            }
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 12, 16, 0.95);
+            z-index: 1000;
+            display: none;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal-overlay.active {
+            display: block;
+        }
+
+        .modal-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .modal-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        /* Compare Modal */
+        .modal-content-wide {
+            max-width: 1400px;
+        }
+
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .compare-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .modal-overlay {
+                padding: 1rem;
+            }
+            .modal-content {
+                padding: 1rem;
+                border-radius: 12px;
+            }
+            .modal-header {
+                margin-bottom: 1rem;
+                padding-bottom: 0.75rem;
+            }
+            .modal-title {
+                font-size: 1.25rem;
+            }
+        }
+
+        .compare-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .compare-section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+        }
+
+        .compare-chart-wrapper {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 1rem;
+            flex: 1;
+            min-height: 300px;
+        }
+
+        @media (max-width: 600px) {
+            .compare-chart-wrapper {
+                min-height: 250px;
+                padding: 0.75rem;
+            }
+        }
+
+        .compare-team-select {
+            width: 100%;
+            max-width: 100%;
+            padding: 0.6rem 1rem;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1rem;
+        }
+
+        /* Customize Modal */
+        .customize-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .customize-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .customize-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .customize-section {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .customize-section-title {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .customize-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .customize-row label {
+            flex: 1;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .customize-row input[type="number"],
+        .customize-row input[type="text"] {
+            width: 80px;
+            padding: 0.4rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .customize-row input[type="color"] {
+            width: 40px;
+            height: 30px;
+            padding: 0;
+            border: 1px solid var(--border-subtle);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .customize-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-gold);
+        }
+
+        .customize-preview {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .customize-preview-chart {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: width 0.2s ease, height 0.2s ease;
+        }
+
+        .customize-preview-chart canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .events-list {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 0.5rem;
+        }
+
+        .event-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem;
+            background: var(--bg-card);
+            border-radius: 4px;
+            margin-bottom: 0.25rem;
+            font-size: 0.8rem;
+        }
+
+        .event-item-game {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-gold);
+        }
+
+        .event-item-text {
+            flex: 1;
+            color: var(--text-secondary);
+        }
+
+        .event-item-remove {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.2rem;
+        }
+
+        .event-item-remove:hover {
+            color: var(--accent-red);
+        }
+
+        .add-event-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .add-event-row input {
+            flex: 1;
+        }
+
+        .add-event-btn {
+            background: var(--accent-gold);
+            color: var(--bg-deep);
+            border: none;
+            padding: 0.4rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .publish-btn {
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-dim));
+            color: var(--bg-deep);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .publish-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(212, 168, 83, 0.3);
         }
 
         .chart-wrapper {
@@ -569,22 +1815,10 @@
             border-radius: 16px;
             overflow: hidden;
             border: 1px solid var(--border-subtle);
-            animation: slideDown 0.4s ease;
         }
 
         .selected-team-card.hidden {
             display: none;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .section-divider {
@@ -755,6 +1989,176 @@
     </header>
 
     <!-- Main Content -->
+    <!-- Fixed Navigation Bar -->
+    <nav class="main-nav" id="mainNav">
+        <span class="main-nav-brand">Rhythm Report</span>
+        <div class="main-nav-divider"></div>
+        <div class="main-nav-center">
+            <a href="#exploreTeam" class="main-nav-item nav-explore">Explore</a>
+            <!-- Tier dropdown for mobile -->
+            <div class="tier-dropdown-container" id="tierDropdown">
+                <button class="tier-dropdown-btn" onclick="toggleTierDropdown(event)">Jump to Tier</button>
+                <div class="tier-dropdown-menu" id="tierDropdownMenu">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+            <!-- Tier links for desktop -->
+            <div class="nav-tier-links" id="navTierLinks">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+        <div class="main-nav-right">
+            <button class="main-nav-item nav-data" onclick="openDataPage()">Data</button>
+            <button class="main-nav-item nav-matrix" onclick="openMatrixPage()">4D Matrix</button>
+            <button class="main-nav-item nav-methods" onclick="openMethodsPage()">Methods</button>
+        </div>
+    </nav>
+
+    <!-- Methods Page Overlay -->
+    <div class="page-overlay" id="methodsPage">
+        <div class="page-overlay-header">
+            <span class="page-overlay-title">Methodology</span>
+            <button class="page-close-btn" onclick="closeMethodsPage()">
+                <span>Close</span>
+                <span>×</span>
+            </button>
+        </div>
+        <div class="page-overlay-content">
+            <div class="methods-content">
+                <div class="methods-subsection">
+                    <h3 class="methods-subtitle">Data Source & Smoothing</h3>
+                    <p class="methods-text">
+                        Game-by-game offensive and defensive ratings are sourced from NBA.com via the nba_api library.
+                        Raw ratings are smoothed using a 10-game rolling average to reveal underlying trends while filtering out single-game noise.
+                    </p>
+                </div>
+
+                <div class="methods-subsection">
+                    <h3 class="methods-subtitle">Consistency (Rugosity)</h3>
+                    <p class="methods-text">
+                        Consistency is measured using <strong>rugosity</strong>—a metric borrowed from ecology and geography that quantifies how "jagged" or volatile a time series is.
+                        Rugosity is calculated as the <em>arc-to-chord ratio</em>: the total path length of the rating curve divided by the straight-line distance from start to end.
+                    </p>
+                    <div class="methods-formula">
+                        <span class="methods-formula-label">Rugosity Formula:</span>
+                        Rugosity = Path Length / Chord Length
+                    </div>
+                    <div class="methods-formula">
+                        <span class="methods-formula-label">Path Length:</span>
+                        Σ √[(xᵢ₊₁ - xᵢ)² + (yᵢ₊₁ - yᵢ)²]  for i = 1 to n-1
+                    </div>
+                    <div class="methods-formula">
+                        <span class="methods-formula-label">Chord Length:</span>
+                        √[(xₙ - x₁)² + (yₙ - y₁)²]
+                    </div>
+                    <p class="methods-text"><strong>Interpretation:</strong></p>
+                    <ul class="methods-list">
+                        <li><code>Rugosity = 1.0</code> — Perfectly straight line (maximum consistency)</li>
+                        <li><code>Rugosity &lt; 1.15</code> — Highly consistent performance</li>
+                        <li><code>Rugosity 1.15 - 1.35</code> — Moderate variation</li>
+                        <li><code>Rugosity &gt; 1.35</code> — Volatile, unpredictable performance</li>
+                    </ul>
+                </div>
+
+                <div class="methods-subsection">
+                    <h3 class="methods-subtitle">Tier Classification</h3>
+                    <p class="methods-text">
+                        Teams are grouped into tiers based on net rating (offensive rating minus defensive rating).
+                        Thresholds are set to create meaningful competitive groupings:
+                    </p>
+                    <ul class="methods-list">
+                        <li><strong>Contenders:</strong> Net Rating &gt; +6.0</li>
+                        <li><strong>Legit Threats:</strong> Net Rating &gt; +3.5</li>
+                        <li><strong>Dangerous:</strong> Net Rating &gt; +1.5</li>
+                        <li><strong>Play-In:</strong> Net Rating &gt; -1.5</li>
+                        <li><strong>Up-and-Coming:</strong> Net Rating &gt; -4.0</li>
+                        <li><strong>Rebuild:</strong> Net Rating &gt; -7.0</li>
+                        <li><strong>Tank:</strong> Net Rating ≤ -7.0</li>
+                    </ul>
+                </div>
+
+                <div class="methods-subsection">
+                    <h3 class="methods-subtitle">4D Matrix Classification</h3>
+                    <p class="methods-text">
+                        Teams are classified using a 4-dimensional matrix based on their position relative to league medians:
+                    </p>
+                    <ul class="methods-list">
+                        <li><strong>Offense Rating:</strong> Above or below league median</li>
+                        <li><strong>Defense Rating:</strong> Above or below league median (lower is better)</li>
+                        <li><strong>Offensive Consistency:</strong> Rugosity above or below median</li>
+                        <li><strong>Defensive Consistency:</strong> Rugosity above or below median</li>
+                    </ul>
+                    <p class="methods-text">This creates 16 possible matrix positions (2⁴), each with a unique label.</p>
+                </div>
+
+                <div class="methods-subsection">
+                    <h3 class="methods-subtitle">Trend Modifiers</h3>
+                    <p class="methods-text">Team labels can be modified based on significant trends:</p>
+                    <ul class="methods-list">
+                        <li><strong>Significant trends</strong> (&gt;1σ) add modifiers like <code>(↑O)</code> or <code>(↓D)</code></li>
+                        <li><strong>Overwhelming trends</strong> (&gt;1.5σ) override the matrix label entirely</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Page Overlay -->
+    <div class="page-overlay" id="dataPage">
+        <div class="page-overlay-header">
+            <span class="page-overlay-title">Team Rankings Data</span>
+            <button class="page-close-btn" onclick="closeDataPage()">
+                <span>Close</span>
+                <span>×</span>
+            </button>
+        </div>
+        <div class="page-overlay-content">
+            <div class="data-rankings-grid" id="dataRankingsGrid">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Matrix Page Overlay -->
+    <div class="page-overlay" id="matrixPage">
+        <div class="page-overlay-header">
+            <span class="page-overlay-title">4D Team Classification Matrix</span>
+            <button class="page-close-btn" onclick="closeMatrixPage()">
+                <span>Close</span>
+                <span>×</span>
+            </button>
+        </div>
+        <div class="page-overlay-content matrix-page-content">
+            <div class="matrix-intro">
+                <p>Teams are positioned in a 4-dimensional space based on Offense Quality, Defense Quality, Offensive Consistency, and Defensive Consistency—each relative to league median. This creates 16 unique team profiles.</p>
+            </div>
+            
+            <div class="matrix-grid-container" id="matrixGridContainer">
+                <!-- Matrix quadrants will be populated dynamically -->
+            </div>
+            
+            <div class="matrix-legend">
+                <div class="matrix-legend-item"><div class="matrix-team-dot tier-contenders"></div> Contenders</div>
+                <div class="matrix-legend-item"><div class="matrix-team-dot tier-legit"></div> Legit Threats</div>
+                <div class="matrix-legend-item"><div class="matrix-team-dot tier-dangerous"></div> Dangerous</div>
+                <div class="matrix-legend-item"><div class="matrix-team-dot tier-playin"></div> Play-In</div>
+                <div class="matrix-legend-item"><div class="matrix-team-dot tier-upcoming"></div> Up-and-Coming</div>
+                <div class="matrix-legend-item"><div class="matrix-team-dot tier-rebuild"></div> Rebuild</div>
+                <div class="matrix-legend-item"><div class="matrix-team-dot tier-tank"></div> Tank</div>
+            </div>
+
+            <div class="matrix-explainer">
+                <h3>How to Read the Matrix</h3>
+                <p>Each cell represents a unique combination of four binary dimensions. The 4-digit code (e.g., <code>1101</code>) indicates:</p>
+                <p><strong>Position 1:</strong> Offense (1 = above median, 0 = below)<br>
+                <strong>Position 2:</strong> Defense (1 = above median/good, 0 = below/bad)<br>
+                <strong>Position 3:</strong> Offensive Consistency (1 = consistent, 0 = volatile)<br>
+                <strong>Position 4:</strong> Defensive Consistency (1 = consistent, 0 = volatile)</p>
+                <p>Teams with significant trends show modifiers like <code>(↑O)</code> for improving offense. Overwhelming trends override the matrix label entirely.</p>
+            </div>
+        </div>
+    </div>
+
     <main class="main-content" id="mainContent">
         <div class="section-intro">
             <h2>Understanding the Numbers</h2>
@@ -767,7 +2171,7 @@
         </div>
 
         <!-- Team Selector -->
-        <div class="team-selector-section">
+        <div class="team-selector-section" id="exploreTeam">
             <div class="team-selector-header">
                 <h2>Explore Any Team</h2>
                 <p>Select a team to view their offensive and defensive trends</p>
@@ -783,6 +2187,128 @@
         <div class="section-divider"></div>
 
         <div id="categoriesContainer"></div>
+        <!-- Compare Modal -->
+        <div class="modal-overlay" id="compareModal">
+            <div class="modal-content modal-content-wide">
+                <div class="modal-header">
+                    <h3 class="modal-title">Compare Teams</h3>
+                    <button class="modal-close" onclick="closeCompareModal()">×</button>
+                </div>
+                <div class="compare-grid">
+                    <div class="compare-section">
+                        <div class="compare-section-title" id="compareTeam1Title">Team 1</div>
+                        <div class="compare-chart-wrapper">
+                            <canvas id="compareChart1"></canvas>
+                        </div>
+                    </div>
+                    <div class="compare-section">
+                        <div class="compare-section-title">
+                            <select class="compare-team-select" id="compareTeamSelect" onchange="updateCompareChart2()">
+                                <option value="">Select a team...</option>
+                            </select>
+                        </div>
+                        <div class="compare-chart-wrapper">
+                            <canvas id="compareChart2"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customize Modal -->
+        <div class="modal-overlay" id="customizeModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Customize Figure</h3>
+                    <button class="modal-close" onclick="closeCustomizeModal()">×</button>
+                </div>
+                <div class="customize-grid">
+                    <div class="customize-controls">
+                        <div class="customize-section">
+                            <div class="customize-section-title">Axis Ranges</div>
+                            <div class="customize-row">
+                                <label>X Min (Game)</label>
+                                <input type="number" id="customXMin" value="1" min="1" max="82" onchange="updateCustomizePreview()">
+                            </div>
+                            <div class="customize-row">
+                                <label>X Max (Game)</label>
+                                <input type="number" id="customXMax" value="82" min="1" max="82" onchange="updateCustomizePreview()">
+                            </div>
+                            <div class="customize-row">
+                                <label>Y Min (Rating)</label>
+                                <input type="number" id="customYMin" value="100" onchange="updateCustomizePreview()">
+                            </div>
+                            <div class="customize-row">
+                                <label>Y Max (Rating)</label>
+                                <input type="number" id="customYMax" value="130" onchange="updateCustomizePreview()">
+                            </div>
+                        </div>
+                        <div class="customize-section">
+                            <div class="customize-section-title">League Reference Lines</div>
+                            <div class="customize-row">
+                                <label>Show Offensive</label>
+                                <input type="checkbox" id="customShowOffRef" onchange="updateCustomizePreview()">
+                            </div>
+                            <div class="customize-row">
+                                <label>Show Defensive</label>
+                                <input type="checkbox" id="customShowDefRef" onchange="updateCustomizePreview()">
+                            </div>
+                        </div>
+                        <div class="customize-section">
+                            <div class="customize-section-title">Colors</div>
+                            <div class="customize-row">
+                                <label>Background</label>
+                                <input type="color" id="customBgColor" value="#1a1e28" onchange="updateCustomizePreview()">
+                            </div>
+                            <div class="customize-row">
+                                <label>Offense Line</label>
+                                <input type="color" id="customOffColor" value="#4a9eff" onchange="updateCustomizePreview()">
+                            </div>
+                            <div class="customize-row">
+                                <label>Defense Line</label>
+                                <input type="color" id="customDefColor" value="#ff6b6b" onchange="updateCustomizePreview()">
+                            </div>
+                            <div class="customize-row">
+                                <label>Axis & Text</label>
+                                <input type="color" id="customAxisColor" value="#5a5f6d" onchange="updateCustomizePreview()">
+                            </div>
+                            <div class="customize-row">
+                                <label>Grid Lines</label>
+                                <input type="color" id="customGridColor" value="#2a2e38" onchange="updateCustomizePreview()">
+                            </div>
+                        </div>
+                        <div class="customize-section">
+                            <div class="customize-section-title">Figure Size</div>
+                            <div class="customize-row">
+                                <label>Width</label>
+                                <input type="range" id="customWidth" min="400" max="1000" value="700" oninput="updateCustomizePreview()">
+                                <span id="customWidthValue" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted); min-width: 45px;">700px</span>
+                            </div>
+                            <div class="customize-row">
+                                <label>Height</label>
+                                <input type="range" id="customHeight" min="200" max="500" value="350" oninput="updateCustomizePreview()">
+                                <span id="customHeightValue" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted); min-width: 45px;">350px</span>
+                            </div>
+                        </div>
+                        <div class="customize-section">
+                            <div class="customize-section-title">Events</div>
+                            <div class="add-event-row">
+                                <input type="number" id="eventGame" placeholder="Game #" min="1" max="82" style="width: 60px;">
+                                <input type="text" id="eventText" placeholder="Event description">
+                                <button class="add-event-btn" onclick="addCustomEvent()">Add</button>
+                            </div>
+                            <div class="events-list" id="eventsList"></div>
+                        </div>
+                    </div>
+                    <div class="customize-preview">
+                        <div class="customize-preview-chart" id="customizePreviewContainer">
+                            <canvas id="customizePreviewChart"></canvas>
+                        </div>
+                        <button class="publish-btn" onclick="publishCustomChart()">Download PNG</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <footer class="footer">
@@ -796,112 +2322,405 @@
     <script>
         // Configuration
         const CONFIG = {
-            YMIN: 100,
-            YMAX: 130,
+            YMIN: 95,
+            YMAX: 135,
             TOPK: 3,
-            DATA_FILE: 'nba_trends_data.json'
+            DATA_FILE: 'nba_trends_data_window5.json',
+            DATA_FILE_SMOOTH: 'nba_trends_data_window7.json'
         };
 
-        // Archetype-based categories in specified order
-        const ARCHETYPES = [
+        // Global data storage
+        let globalTeamsDataSmooth = null; // Window 10 data for smooth curves
+
+        // Page overlay functions
+        function openMethodsPage() {
+            document.getElementById('methodsPage').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMethodsPage() {
+            document.getElementById('methodsPage').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function openDataPage() {
+            populateDataRankings();
+            document.getElementById('dataPage').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDataPage() {
+            document.getElementById('dataPage').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function populateDataRankings() {
+            if (!globalTeamsData) return;
+
+            const rankings = [
+                {
+                    key: 'most_consistent',
+                    title: 'Most Consistent',
+                    formula: 'offRug + defRug',
+                    sortFn: (a, b) => (a.offRugosity + a.defRugosity) - (b.offRugosity + b.defRugosity),
+                    valueFn: (t) => (t.offRugosity + t.defRugosity).toFixed(2)
+                },
+                {
+                    key: 'best_offense',
+                    title: 'Best Offense',
+                    formula: 'offRtg - offRug×0.5',
+                    sortFn: (a, b) => (b.offLevel - b.offRugosity * 0.5) - (a.offLevel - a.offRugosity * 0.5),
+                    valueFn: (t) => (t.offLevel - t.offRugosity * 0.5).toFixed(1)
+                },
+                {
+                    key: 'best_defense',
+                    title: 'Best Defense',
+                    formula: 'defRtg + defRug×0.5',
+                    sortFn: (a, b) => (a.defLevel + a.defRugosity * 0.5) - (b.defLevel + b.defRugosity * 0.5),
+                    valueFn: (t) => (t.defLevel + t.defRugosity * 0.5).toFixed(1)
+                },
+                {
+                    key: 'on_the_rise',
+                    title: 'On the Rise',
+                    formula: 'offSlope₂₀ - defSlope₂₀',
+                    sortFn: (a, b) => (b.recentTrendScore || 0) - (a.recentTrendScore || 0),
+                    valueFn: (t) => (t.recentTrendScore || 0).toFixed(3)
+                },
+                {
+                    key: 'on_the_decline',
+                    title: 'On the Decline',
+                    formula: 'offSlope₂₀ - defSlope₂₀',
+                    sortFn: (a, b) => (a.recentTrendScore || 0) - (b.recentTrendScore || 0),
+                    valueFn: (t) => (t.recentTrendScore || 0).toFixed(3)
+                }
+            ];
+
+            const container = document.getElementById('dataRankingsGrid');
+            container.innerHTML = rankings.map(ranking => {
+                const sorted = [...globalTeamsData].sort(ranking.sortFn);
+                const top10 = sorted.slice(0, 10);
+
+                return `
+                    <div class="data-ranking-card">
+                        <div class="data-ranking-header">
+                            <span class="data-ranking-badge award-badge ${ranking.key}">${ranking.title}</span>
+                        </div>
+                        <div class="data-ranking-formula">${ranking.formula}</div>
+                        <ul class="data-ranking-list">
+                            ${top10.map((team, i) => `
+                                <li>
+                                    <span class="data-rank-num">${i + 1}.</span>
+                                    <span class="data-rank-team">${team.name}</span>
+                                    <span class="data-rank-value">${ranking.valueFn(team)}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Tier dropdown functions
+        function toggleTierDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('tierDropdown');
+            dropdown.classList.toggle('open');
+        }
+
+        function closeTierDropdown() {
+            const dropdown = document.getElementById('tierDropdown');
+            dropdown.classList.remove('open');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('tierDropdown');
+            if (dropdown && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('open');
+            }
+        });
+
+        function openMatrixPage() {
+            document.getElementById('matrixPage').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            renderMatrixVisualization();
+        }
+
+        function closeMatrixPage() {
+            document.getElementById('matrixPage').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Matrix labels
+        const MATRIX_LABELS = {
+            "1111": "Elite Machine",
+            "1110": "Elite but Shaky D",
+            "1101": "Streaky Juggernaut",
+            "1100": "Talented Chaos",
+            "1011": "Offensive Engine",
+            "1010": "Offensive Engine, Leaky",
+            "1001": "Feast or Famine",
+            "1000": "Shootout Specialists",
+            "0111": "Defensive Anchor",
+            "0110": "Grinders",
+            "0101": "Defensive Anchor, Streaky O",
+            "0100": "Defensive Chaos",
+            "0011": "Steady Mediocrity",
+            "0010": "Consistently Inconsistent",
+            "0001": "Struggling but Steady D",
+            "0000": "Full Rebuild Mode"
+        };
+
+        function getTierClass(tier) {
+            const map = {
+                'Contenders': 'tier-contenders',
+                'Legit Threats': 'tier-legit',
+                'Dangerous': 'tier-dangerous',
+                'Play-In': 'tier-playin',
+                'Up-and-Coming': 'tier-upcoming',
+                'Rebuild': 'tier-rebuild',
+                'Tank': 'tier-tank'
+            };
+            return map[tier] || 'tier-playin';
+        }
+
+        function getTeamAbbrev(name) {
+            const abbrevs = {
+                'Atlanta Hawks': 'ATL', 'Boston Celtics': 'BOS', 'Brooklyn Nets': 'BKN',
+                'Charlotte Hornets': 'CHA', 'Chicago Bulls': 'CHI', 'Cleveland Cavaliers': 'CLE',
+                'Dallas Mavericks': 'DAL', 'Denver Nuggets': 'DEN', 'Detroit Pistons': 'DET',
+                'Golden State Warriors': 'GSW', 'Houston Rockets': 'HOU', 'Indiana Pacers': 'IND',
+                'Los Angeles Clippers': 'LAC', 'Los Angeles Lakers': 'LAL', 'Memphis Grizzlies': 'MEM',
+                'Miami Heat': 'MIA', 'Milwaukee Bucks': 'MIL', 'Minnesota Timberwolves': 'MIN',
+                'New Orleans Pelicans': 'NOP', 'New York Knicks': 'NYK', 'Oklahoma City Thunder': 'OKC',
+                'Orlando Magic': 'ORL', 'Philadelphia 76ers': 'PHI', 'Phoenix Suns': 'PHX',
+                'Portland Trail Blazers': 'POR', 'Sacramento Kings': 'SAC', 'San Antonio Spurs': 'SAS',
+                'Toronto Raptors': 'TOR', 'Utah Jazz': 'UTA', 'Washington Wizards': 'WAS'
+            };
+            return abbrevs[name] || name.substring(0, 3).toUpperCase();
+        }
+
+        function renderMatrixVisualization() {
+            if (!globalTeamsData) return;
+
+            const matrixGroups = {};
+            Object.keys(MATRIX_LABELS).forEach(code => {
+                matrixGroups[code] = [];
+            });
+
+            globalTeamsData.forEach(team => {
+                const code = team.matrixCode || "0011";
+                if (matrixGroups[code]) {
+                    matrixGroups[code].push(team);
+                }
+            });
+
+            function buildMatrixCell(code) {
+                const teams = matrixGroups[code] || [];
+                const label = MATRIX_LABELS[code];
+                const teamChips = teams.map(t => 
+                    `<span class="matrix-team-chip ${getTierClass(t.tier)}" title="${t.name}">${getTeamAbbrev(t.name)}</span>`
+                ).join('');
+                
+                return `
+                    <div class="matrix-cell">
+                        <div class="matrix-cell-label">${code}</div>
+                        <div class="matrix-cell-name">${label}</div>
+                        <div class="matrix-cell-teams">${teamChips || '<span style="color: var(--text-muted); font-size: 0.65rem;">—</span>'}</div>
+                    </div>
+                `;
+            }
+
+            const container = document.getElementById('matrixGridContainer');
+            container.innerHTML = `
+                <div class="matrix-quadrant">
+                    <div class="matrix-quadrant-title">
+                        <span style="color: var(--accent-green);">●</span> Good Offense + Good Defense
+                    </div>
+                    <div class="matrix-quadrant-subtitle">Above median in both ratings</div>
+                    <div class="matrix-cell-grid">
+                        ${buildMatrixCell("1111")}
+                        ${buildMatrixCell("1110")}
+                        ${buildMatrixCell("1101")}
+                        ${buildMatrixCell("1100")}
+                    </div>
+                </div>
+                
+                <div class="matrix-quadrant">
+                    <div class="matrix-quadrant-title">
+                        <span style="color: var(--accent-blue);">●</span> Good Offense + Bad Defense
+                    </div>
+                    <div class="matrix-quadrant-subtitle">Offense above median, defense below</div>
+                    <div class="matrix-cell-grid">
+                        ${buildMatrixCell("1011")}
+                        ${buildMatrixCell("1010")}
+                        ${buildMatrixCell("1001")}
+                        ${buildMatrixCell("1000")}
+                    </div>
+                </div>
+                
+                <div class="matrix-quadrant">
+                    <div class="matrix-quadrant-title">
+                        <span style="color: var(--accent-gold);">●</span> Bad Offense + Good Defense
+                    </div>
+                    <div class="matrix-quadrant-subtitle">Defense above median, offense below</div>
+                    <div class="matrix-cell-grid">
+                        ${buildMatrixCell("0111")}
+                        ${buildMatrixCell("0110")}
+                        ${buildMatrixCell("0101")}
+                        ${buildMatrixCell("0100")}
+                    </div>
+                </div>
+                
+                <div class="matrix-quadrant">
+                    <div class="matrix-quadrant-title">
+                        <span style="color: var(--accent-red);">●</span> Bad Offense + Bad Defense
+                    </div>
+                    <div class="matrix-quadrant-subtitle">Below median in both ratings</div>
+                    <div class="matrix-cell-grid">
+                        ${buildMatrixCell("0011")}
+                        ${buildMatrixCell("0010")}
+                        ${buildMatrixCell("0001")}
+                        ${buildMatrixCell("0000")}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Tier definitions for grouping teams by net rating
+        const TIERS = [
             {
-                key: 'theMachine',
-                title: 'The Machine',
-                description: 'Championship-caliber. Elite on both ends, runs like clockwork.',
-                archetype: 'The Machine'
+                key: 'contenders',
+                title: 'Contenders',
+                description: 'The elite of the elite. Championship-caliber teams with dominant net ratings.',
+                longDescription: 'These teams have separated themselves from the pack with consistently dominant play on both ends of the floor. They\'re the favorites to compete for a championship.'
             },
             {
-                key: 'streakyContender',
-                title: 'Streaky Contender',
-                description: 'Elite talent but maddeningly inconsistent. High ceiling, low floor.',
-                archetype: 'Streaky Contender'
+                key: 'legitThreats',
+                title: 'Legit Threats',
+                description: 'Serious playoff teams capable of making deep runs.',
+                longDescription: 'Strong teams with the talent and execution to make noise in the playoffs. On their best nights, they can beat anyone.'
             },
             {
-                key: 'fireworksShow',
-                title: 'Fireworks Show',
-                description: 'Explosive offense but gives up buckets. Every game is a shootout.',
-                archetype: 'Fireworks Show'
+                key: 'dangerous',
+                title: 'Dangerous',
+                description: 'Playoff-bound teams that nobody wants to face in the first round.',
+                longDescription: 'These teams have enough talent and cohesion to be problematic matchups. They\'re not quite elite, but they\'re not far off.'
             },
             {
-                key: 'feastOrFamine',
-                title: 'Feast or Famine',
-                description: 'Great offense on paper, but wildly inconsistent execution.',
-                archetype: 'Feast or Famine'
+                key: 'playIn',
+                title: 'Play-In',
+                description: 'Battling for playoff positioning. Could go either way.',
+                longDescription: 'The middle of the pack. These teams are fighting for playoff spots and could surge or fade as the season progresses.'
             },
             {
-                key: 'defensiveShell',
-                title: 'Defensive Shell',
-                description: "Can't score but makes every game a grind. Low-scoring rock fights.",
-                archetype: 'Defensive Shell'
+                key: 'upAndComing',
+                title: 'Up-and-Coming',
+                description: 'Young teams showing promise. The future is bright.',
+                longDescription: 'Developing squads with young talent learning to win. They may not be there yet, but the trajectory is promising.'
             },
             {
-                key: 'defensiveRollercoaster',
-                title: 'Defensive Rollercoaster',
-                description: 'Good defense overall but prone to random blowup games.',
-                archetype: 'Defensive Rollercoaster'
+                key: 'rebuild',
+                title: 'Rebuild',
+                description: 'In transition. Developing talent and building for tomorrow.',
+                longDescription: 'Teams in the midst of roster reconstruction. Focused on player development and accumulating assets for the future.'
             },
             {
-                key: 'defensiveFortress',
-                title: 'Defensive Fortress',
-                description: 'Wins with defense. May not wow offensively but locks opponents down.',
-                archetype: 'Defensive Fortress'
-            },
-            {
-                key: 'steadyContender',
-                title: 'Steady Contender',
-                description: 'Reliable playoff team. Strong offense, passable defense, no surprises.',
-                archetype: 'Steady Contender'
-            },
-            {
-                key: 'jekyllHyde',
-                title: 'Jekyll & Hyde',
-                description: 'Completely different team night-to-night on both ends. Chaos incarnate.',
-                archetype: 'Jekyll & Hyde'
-            },
-            {
-                key: 'risingTide',
-                title: 'Rising Tide',
-                description: 'Getting better on both ends. Breakout candidate or midseason surge.',
-                archetype: 'Rising Tide'
-            },
-            {
-                key: 'fallingApart',
-                title: 'Falling Apart',
-                description: 'Trending wrong direction everywhere. Injuries? Chemistry issues?',
-                archetype: 'Falling Apart'
-            },
-            {
-                key: 'oneWaySurge',
-                title: 'One-Way Surge',
-                description: 'Offense clicking into gear while defense holds steady.',
-                archetype: 'One-Way Surge'
-            },
-            {
-                key: 'defensiveAwakening',
-                title: 'Defensive Awakening',
-                description: 'Finding defensive identity. Could become a playoff pest.',
-                archetype: 'Defensive Awakening'
+                key: 'tank',
+                title: 'Tank',
+                description: 'Eyes on the draft lottery. Every loss is a win.',
+                longDescription: 'The league\'s worst teams by net rating. Whether by design or circumstance, they\'re positioned for high draft picks.'
             }
         ];
 
+        // Map tier names from Python to keys
+        const TIER_KEY_MAP = {
+            'Contenders': 'contenders',
+            'Legit Threats': 'legitThreats',
+            'Dangerous': 'dangerous',
+            'Play-In': 'playIn',
+            'Up-and-Coming': 'upAndComing',
+            'Rebuild': 'rebuild',
+            'Tank': 'tank'
+        };
+
         function generateNarrative(team) {
-            const archetype = team.archetype || 'Unclassified';
-            const narratives = {
-                'The Machine': `The ${team.name} are the gold standard this season—elite on both ends with remarkable consistency. Their offensive rating of ${team.offLevel.toFixed(1)} and defensive rating of ${team.defLevel.toFixed(1)} are both top-tier, and they deliver night after night.`,
-                'Streaky Contender': `The ${team.name} have all the talent to compete with anyone, but their volatile play makes them unpredictable. On their best nights, they're unstoppable. On their worst, they're puzzling.`,
-                'Fireworks Show': `Watching the ${team.name} is pure entertainment—they'll put up points in bunches but give up just as many. With an offensive rugosity of ${team.offRugosity?.toFixed(3) || 'N/A'}, expect wild swings.`,
-                'Feast or Famine': `The ${team.name} possess elite offensive talent but can't find consistency. One night they score 130, the next they struggle to crack 100. The offense comes and goes without warning.`,
-                'Defensive Shell': `The ${team.name} won't outscore you, but they'll make you work for every bucket. Their defense holds opponents to just ${team.defLevel.toFixed(1)} per 100 possessions, grinding games to a halt.`,
-                'Defensive Rollercoaster': `The ${team.name} have a strong defensive identity overall, but they're prone to inexplicable lapses. Some nights the defense is suffocating; others, it's nowhere to be found.`,
-                'Defensive Fortress': `The ${team.name} hang their hat on defense, holding opponents to ${team.defLevel.toFixed(1)} per 100 possessions with remarkable consistency. The offense is secondary to their lockdown identity.`,
-                'Steady Contender': `The ${team.name} are a model of reliability—strong offense (${team.offLevel.toFixed(1)} ORtg) with consistent execution. You know exactly what you're getting every night.`,
-                'Jekyll & Hyde': `The ${team.name} are impossible to predict. Both their offense and defense swing wildly from game to game, making them capable of beating or losing to anyone.`,
-                'Rising Tide': `The ${team.name} are on an upward trajectory. Both their offense and defense are improving as the season progresses—a team to watch as the playoffs approach.`,
-                'Falling Apart': `The ${team.name} are trending in the wrong direction on both ends. Whether it's injuries, chemistry, or fatigue, the numbers paint a concerning picture.`,
-                'One-Way Surge': `The ${team.name}'s offense is heating up, improving at ${(team.offSlope * 10).toFixed(2)} points per 10 games while their defense holds steady. The attack is finding its rhythm.`,
-                'Defensive Awakening': `The ${team.name} are discovering their defensive identity, tightening up at ${(-team.defSlope * 10).toFixed(2)} points per 10 games. A late-season defensive surge could make them dangerous.`
+            // Dynamic narrative based on matrix position and trends
+            const mp = team.matrixPosition || {};
+            const netRating = team.netRating || 0;
+            
+            // Build offense description
+            let offDesc = mp.offHigh ? "strong offense" : "struggling offense";
+            if (mp.offConsistent !== undefined) {
+                offDesc = mp.offConsistent ? `consistently ${offDesc}` : `volatile ${offDesc}`;
+            }
+            
+            // Build defense description  
+            let defDesc = mp.defHigh ? "solid defense" : "porous defense";
+            if (mp.defConsistent !== undefined) {
+                defDesc = mp.defConsistent ? `reliably ${defDesc}` : `unpredictable ${defDesc}`;
+            }
+            
+            // Add trend context
+            let trendDesc = "";
+            if (team.trendOverride) {
+                // Overwhelming trend - this IS the story
+                const archetype = team.archetype || "";
+                if (archetype.includes("Rising")) {
+                    trendDesc = "They're surging on both ends and could be dangerous.";
+                } else if (archetype.includes("Falling")) {
+                    trendDesc = "They're trending down fast—something needs to change.";
+                } else if (archetype.includes("Offensive Breakout")) {
+                    trendDesc = "Their offense has caught fire recently.";
+                } else if (archetype.includes("Offensive Freefall")) {
+                    trendDesc = "Their offense has fallen off a cliff.";
+                } else if (archetype.includes("Defensive Transformation")) {
+                    trendDesc = "They've found their defensive identity.";
+                } else if (archetype.includes("Defensive Meltdown")) {
+                    trendDesc = "Their defense has completely unraveled.";
+                }
+            } else if (team.trendModifier) {
+                // Significant but not overwhelming trends
+                const mods = team.trendModifier;
+                if (mods.includes("↑O") && mods.includes("↑D")) {
+                    trendDesc = "Both ends are trending the right way.";
+                } else if (mods.includes("↓O") && mods.includes("↓D")) {
+                    trendDesc = "Concerning trends on both ends.";
+                } else if (mods.includes("↑O")) {
+                    trendDesc = "The offense is heating up.";
+                } else if (mods.includes("↓O")) {
+                    trendDesc = "The offense has cooled off.";
+                } else if (mods.includes("↑D")) {
+                    trendDesc = "The defense is tightening up.";
+                } else if (mods.includes("↓D")) {
+                    trendDesc = "The defense is slipping.";
+                }
+            }
+            
+            return `The ${team.name} sit at a ${netRating > 0 ? '+' : ''}${netRating.toFixed(1)} net rating with a ${offDesc} and ${defDesc}. ${trendDesc} They're averaging ${team.offLevel.toFixed(1)} offensive rating and ${team.defLevel.toFixed(1)} defensive rating through ${team.games} games.`;
+        }
+
+        // Dynamic archetype descriptions based on matrix code
+        function getMatrixDescription(matrixCode) {
+            const descriptions = {
+                "1111": "Elite on both ends with consistent execution. The gold standard.",
+                "1110": "Strong overall but defensive consistency wavers game-to-game.",
+                "1101": "Offense can disappear, but when it shows up with the steady defense, they're dangerous.",
+                "1100": "Talented enough to beat anyone, chaotic enough to lose to anyone.",
+                "1011": "The offense carries them, but the defense is a known liability.",
+                "1010": "Potent attack, but the defense is both bad and unreliable.",
+                "1001": "Explosive scoring potential but wildly inconsistent. Defense is consistently bad.",
+                "1000": "Every game is a track meet. Can outscore anyone but can't stop anyone.",
+                "0111": "Defense-first identity with rock-solid consistency. Wins ugly.",
+                "0110": "Grinding style with steady offense but defense can have bad nights.",
+                "0101": "Strong D anchors them, but the offense is hit-or-miss.",
+                "0100": "Good defense on paper but unpredictable on both ends.",
+                "0011": "Not good, but at least predictably not good.",
+                "0010": "Offense is what it is, defense is a rollercoaster.",
+                "0001": "Struggling to score, but the defense is at least steady.",
+                "0000": "The full rebuild experience—volatile and struggling everywhere."
             };
-            return narratives[archetype] || `The ${team.name} have shown a unique profile this season, defying easy categorization.`;
+            return descriptions[matrixCode] || "Unique profile that defies easy categorization.";
         }
 
         // Utility functions
@@ -914,8 +2733,22 @@
             return sorted[lower] * (upper - idx) + sorted[upper] * (idx - lower);
         }
 
+        // Track when the page started loading
+        const pageLoadStart = Date.now();
+        const MIN_LOADING_TIME = 2000; // Minimum 2 seconds loading screen
+
         function hideLoading() {
-            document.getElementById('loadingScreen').classList.add('hidden');
+            const elapsed = Date.now() - pageLoadStart;
+            const remaining = Math.max(0, MIN_LOADING_TIME - elapsed);
+
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loadingScreen');
+                loadingScreen.classList.add('fade-out');
+                // Remove from DOM after fade completes
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                }, 500);
+            }, remaining);
         }
 
         function showError(message) {
@@ -931,6 +2764,32 @@
         // Store global data for team selector
         let globalTeamsData = null;
         let selectedTeamChart = null;
+        const chartInstances = {}; // Store all chart instances by canvas ID
+
+        // Toggle between smooth (window 10) and regular (window 5) curve data
+        function toggleSmoothCurve(canvasId, teamName, useSmooth) {
+            if (!globalTeamsDataSmooth) return;
+
+            // Get the chart instance
+            const chart = chartInstances[canvasId] || (canvasId === 'selectedTeamChart' ? selectedTeamChart : null);
+            if (!chart) return;
+
+            // Find team data from the appropriate dataset
+            const baseTeam = globalTeamsData.find(t => t.name === teamName);
+            const smoothTeam = globalTeamsDataSmooth.find(t => t.name === teamName);
+            if (!baseTeam || !smoothTeam) return;
+
+            // Find the offensive and defensive rating datasets (main team data)
+            chart.data.datasets.forEach(dataset => {
+                if (dataset.label === 'Offensive Rating') {
+                    dataset.data = useSmooth ? smoothTeam.offSmooth : baseTeam.offSmooth;
+                } else if (dataset.label === 'Defensive Rating') {
+                    dataset.data = useSmooth ? smoothTeam.defSmooth : baseTeam.defSmooth;
+                }
+            });
+
+            chart.update('none'); // Update without animation
+        }
 
         function populateTeamSelector(teams) {
             const selector = document.getElementById('teamSelector');
@@ -984,19 +2843,40 @@
 
         function getExtremeTeams(type) {
             if (!globalTeamsData) return null;
-            const key = type === 'offense' ? 'offLevel' : 'defLevel';
-            const sorted = [...globalTeamsData].sort((a, b) => b[key] - a[key]);
+            const levelKey = type === 'offense' ? 'offLevel' : 'defLevel';
+            const rugosityKey = type === 'offense' ? 'offRugosity' : 'defRugosity';
+            
+            const sorted = [...globalTeamsData].sort((a, b) => b[levelKey] - a[levelKey]);
             
             // For defense, lower is better, so flip
             const best = type === 'offense' ? sorted[0] : sorted[sorted.length - 1];
             const worst = type === 'offense' ? sorted[sorted.length - 1] : sorted[0];
             
-            // Find team closest to mean
-            const values = globalTeamsData.map(t => t[key]);
+            // Find team closest to mean WITH low rugosity
+            // Score = distance from mean (normalized) + rugosity penalty
+            const values = globalTeamsData.map(t => t[levelKey]);
             const mean = values.reduce((a, b) => a + b, 0) / values.length;
-            const meanTeam = globalTeamsData.reduce((closest, t) => 
-                Math.abs(t[key] - mean) < Math.abs(closest[key] - mean) ? t : closest
-            );
+            const stdDev = Math.sqrt(values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length);
+            
+            const rugosities = globalTeamsData.map(t => t[rugosityKey] || 1.0);
+            const minRug = Math.min(...rugosities);
+            const maxRug = Math.max(...rugosities);
+            const rugRange = maxRug - minRug || 1;
+            
+            // Find team that balances being close to mean AND having low rugosity
+            const meanTeam = globalTeamsData.reduce((best, t) => {
+                const distFromMean = Math.abs(t[levelKey] - mean) / (stdDev || 1); // normalized distance
+                const rugosityScore = ((t[rugosityKey] || 1.0) - minRug) / rugRange; // 0 = smoothest, 1 = roughest
+                
+                // Combined score: weight rugosity more heavily (we want smooth lines)
+                const score = distFromMean * 0.3 + rugosityScore * 0.7;
+                
+                const bestDistFromMean = Math.abs(best[levelKey] - mean) / (stdDev || 1);
+                const bestRugosityScore = ((best[rugosityKey] || 1.0) - minRug) / rugRange;
+                const bestScore = bestDistFromMean * 0.3 + bestRugosityScore * 0.7;
+                
+                return score < bestScore ? t : best;
+            });
             
             return { max: best, min: worst, mean: meanTeam };
         }
@@ -1043,6 +2923,8 @@
 
             const offTrendClass = team.offSlope > 0.05 ? 'positive' : team.offSlope < -0.05 ? 'negative' : 'neutral';
             const defTrendClass = team.defSlope < -0.05 ? 'positive' : team.defSlope > 0.05 ? 'negative' : 'neutral';
+            const netRating = (team.netRating !== undefined) ? team.netRating : (team.offLevel - team.defLevel);
+            const netRatingClass = netRating > 0 ? 'positive' : netRating < 0 ? 'negative' : 'neutral';
 
             // Determine team's story
             let narrative = '';
@@ -1058,40 +2940,55 @@
                 narrative = `The ${team.name} have maintained a relatively steady trajectory this season, with moderate fluctuations in performance.`;
             }
 
+            // Get rankings
+            const rankings = getTeamRankings(team);
+
             container.innerHTML = `
                 <div class="team-card-header">
-                    <h3 class="team-name">${team.name}</h3>
+                    <h3 class="team-name">${team.name}${renderAwardBadges(team)}</h3>
                     <div class="team-header-badges">
                         ${team.archetype ? `<span class="archetype-badge">${team.archetype}</span>` : ''}
+                        ${team.tier ? `<span class="tier-badge">${team.tier}</span>` : ''}
                         <span class="team-rank">${team.games} of 82 games</span>
                     </div>
                 </div>
                 <div class="team-card-body">
                     <p class="team-narrative">${narrative}</p>
                     <div class="team-stats">
+                        <div class="stat-box highlight">
+                            <div class="stat-label">Net Rating</div>
+                            <div class="stat-value ${netRatingClass}">${netRating > 0 ? '+' : ''}${netRating.toFixed(1)}</div>
+                            <div class="stat-ranking">#${rankings.netRating}</div>
+                        </div>
                         <div class="stat-box">
-                            <div class="stat-value neutral">${team.offLevel.toFixed(1)}</div>
                             <div class="stat-label">Avg Off Rtg</div>
+                            <div class="stat-value neutral">${team.offLevel.toFixed(1)}</div>
+                            <div class="stat-ranking">#${rankings.offLevel}</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-value neutral">${team.defLevel.toFixed(1)}</div>
                             <div class="stat-label">Avg Def Rtg</div>
+                            <div class="stat-value neutral">${team.defLevel.toFixed(1)}</div>
+                            <div class="stat-ranking">#${rankings.defLevel}</div>
                         </div>
                         <div class="stat-box">
+                            <div class="stat-label">Off Consistency</div>
                             <div class="stat-value ${team.offRugosity ? (team.offRugosity > 1.35 ? 'negative' : team.offRugosity < 1.15 ? 'positive' : 'neutral') : 'neutral'}">${team.offRugosity ? team.offRugosity.toFixed(3) : 'N/A'}</div>
-                            <div class="stat-label">Off Rugosity</div>
+                            <div class="stat-ranking">#${rankings.offRugosity}</div>
                         </div>
                         <div class="stat-box">
+                            <div class="stat-label">Def Consistency</div>
                             <div class="stat-value ${team.defRugosity ? (team.defRugosity > 1.35 ? 'negative' : team.defRugosity < 1.15 ? 'positive' : 'neutral') : 'neutral'}">${team.defRugosity ? team.defRugosity.toFixed(3) : 'N/A'}</div>
-                            <div class="stat-label">Def Rugosity</div>
+                            <div class="stat-ranking">#${rankings.defRugosity}</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-value ${offTrendClass}">${team.offSlope > 0 ? '+' : ''}${(team.offSlope * 10).toFixed(2)}</div>
                             <div class="stat-label">Off Trend/10g</div>
+                            <div class="stat-value ${offTrendClass}">${team.offSlope > 0 ? '+' : ''}${(team.offSlope * 10).toFixed(2)}</div>
+                            <div class="stat-ranking">#${rankings.offSlope}</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-value ${defTrendClass}">${team.defSlope > 0 ? '+' : ''}${(team.defSlope * 10).toFixed(2)}</div>
                             <div class="stat-label">Def Trend/10g</div>
+                            <div class="stat-value ${defTrendClass}">${team.defSlope > 0 ? '+' : ''}${(team.defSlope * 10).toFixed(2)}</div>
+                            <div class="stat-ranking">#${rankings.defSlope}</div>
                         </div>
                     </div>
                     
@@ -1120,6 +3017,18 @@
                     </div>
                     
                     <div class="chart-container">
+                        <div class="chart-header">
+                            <span class="chart-title">Season Trend</span>
+                            <div class="chart-actions">
+                                <label class="smooth-toggle">
+                                    <span class="smooth-toggle-label">Smooth</span>
+                                    <input type="checkbox" id="smoothToggleSelected" onchange="toggleSmoothCurve('selectedTeamChart', '${team.name}', this.checked)">
+                                    <span class="smooth-toggle-switch"></span>
+                                </label>
+                                <button class="chart-action-btn" onclick="openCompareModal('${team.name}')">Compare</button>
+                                <button class="chart-action-btn" onclick="openCustomizeModal('${team.name}')">Customize</button>
+                            </div>
+                        </div>
                         <div class="chart-wrapper">
                             <canvas id="selectedTeamChart"></canvas>
                         </div>
@@ -1338,7 +3247,7 @@
                 }
             };
             
-            return new Chart(ctx, {
+            const chart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: Array.from({length: 82}, (_, i) => i + 1),
@@ -1346,6 +3255,7 @@
                 },
                 plugins: [endLabelPlugin],
                 options: {
+                    animation: false,
                     responsive: true,
                     maintainAspectRatio: false,
                     layout: {
@@ -1406,6 +3316,10 @@
                     }
                 }
             });
+
+            // Store the chart instance for later updates
+            chartInstances[canvasId] = chart;
+            return chart;
         }
 
         function renderCategories(data) {
@@ -1414,64 +3328,82 @@
             let chartIndex = 0;
             const chartsToCreate = [];
             
-            // Track which teams have been assigned to prevent duplicates
-            const assignedTeams = new Set();
+            // Group teams by tier
+            const tierGroups = {};
+            TIERS.forEach(tier => {
+                tierGroups[tier.key] = [];
+            });
+            
+            // Sort teams by net rating within each tier
+            data.teams.forEach(team => {
+                const tierKey = TIER_KEY_MAP[team.tier] || 'playIn';
+                if (tierGroups[tierKey]) {
+                    tierGroups[tierKey].push(team);
+                }
+            });
+            
+            // Sort each tier by net rating (descending)
+            Object.keys(tierGroups).forEach(key => {
+                tierGroups[key].sort((a, b) => b.netRating - a.netRating);
+            });
+            
+            // Determine which tiers have teams
+            const activeTiers = TIERS.filter(tier => tierGroups[tier.key].length > 0);
 
-            ARCHETYPES.forEach((archetype, catIdx) => {
-                // Find teams matching this archetype that haven't been assigned yet
-                const matchingTeams = data.teams.filter(t => 
-                    t.archetype === archetype.archetype && !assignedTeams.has(t.name)
-                );
-                
-                if (matchingTeams.length === 0) return;
-                
-                // Mark these teams as assigned
-                matchingTeams.forEach(t => assignedTeams.add(t.name));
-                
-                // Get top 3 (or fewer if not available)
-                const topTeams = matchingTeams.slice(0, 3);
-                const primaryTeam = topTeams[0];
-                const additionalTeams = topTeams.slice(1);
+            // Update the main navigation with tier links (desktop) and dropdown (mobile)
+            const navTierLinks = document.getElementById('navTierLinks');
+            const tierDropdownMenu = document.getElementById('tierDropdownMenu');
 
-                const chartId = `chart-${chartIndex++}`;
-                chartsToCreate.push({ id: chartId, data: primaryTeam });
+            // Desktop tier links
+            let tierLinksHtml = '';
+            activeTiers.forEach(tier => {
+                tierLinksHtml += `<a href="#${tier.key}" class="main-nav-item">${tier.title} <span class="nav-count">${tierGroups[tier.key].length}</span></a>`;
+            });
+            navTierLinks.innerHTML = tierLinksHtml;
 
+            // Mobile dropdown menu
+            let dropdownHtml = '';
+            dropdownHtml += `<a href="#exploreTeam" class="tier-dropdown-item" onclick="closeTierDropdown()">Explore a Team</a>`;
+            activeTiers.forEach(tier => {
+                dropdownHtml += `<a href="#${tier.key}" class="tier-dropdown-item" onclick="closeTierDropdown()">${tier.title} <span class="tier-count">${tierGroups[tier.key].length}</span></a>`;
+            });
+            tierDropdownMenu.innerHTML = dropdownHtml;
+
+            // Add tier description header
+            html += `
+                <div class="tier-intro">
+                    <h2 class="tier-intro-title">Team Tiers by Net Rating</h2>
+                    <p class="tier-intro-description">
+                        Teams are grouped into competitive tiers based on their net rating (offensive rating minus defensive rating). 
+                        This metric captures overall team quality—positive values indicate outscoring opponents, while negative values indicate being outscored.
+                        Within each tier, teams are labeled dynamically based on their 4D matrix position and trend significance.
+                    </p>
+                </div>
+            `;
+
+            TIERS.forEach((tier, tierIdx) => {
+                const teams = tierGroups[tier.key];
+                
+                if (teams.length === 0) return;
+                
                 html += `
-                    <section class="category-section" data-category="${catIdx}">
+                    <section class="category-section" id="${tier.key}" data-category="${tierIdx}">
                         <div class="category-header">
-                            <span class="category-number">${String(catIdx + 1).padStart(2, '0')}</span>
                             <div class="category-title-group">
-                                <h2 class="category-title">${archetype.title}</h2>
-                                <p class="category-description">${archetype.description}</p>
+                                <h2 class="category-title">${tier.title}</h2>
+                                <p class="category-description">${tier.longDescription}</p>
                             </div>
+                            <div class="tier-count">${teams.length} team${teams.length !== 1 ? 's' : ''}</div>
                         </div>
                         <div class="team-cards">
-                            ${renderTeamCard(primaryTeam, chartId, 1)}
                 `;
 
-                // Add expandable section if there are more teams
-                if (additionalTeams.length > 0) {
-                    const expandId = `expand-${catIdx}`;
-                    html += `
-                        <div class="show-more-container">
-                            <button class="show-more-btn" data-expand="${expandId}">
-                                <span class="show-more-text">Show ${additionalTeams.length} more</span>
-                                <span class="show-more-icon">▼</span>
-                            </button>
-                            <div class="expandable-content" id="${expandId}">
-                    `;
-                    
-                    additionalTeams.forEach((team, idx) => {
-                        const additionalChartId = `chart-${chartIndex++}`;
-                        chartsToCreate.push({ id: additionalChartId, data: team, deferred: true, expandId: expandId });
-                        html += renderTeamCard(team, additionalChartId, idx + 2);
-                    });
-                    
-                    html += `
-                            </div>
-                        </div>
-                    `;
-                }
+                // Show ALL teams (no "show more")
+                teams.forEach((team, idx) => {
+                    const chartId = `chart-${chartIndex++}`;
+                    chartsToCreate.push({ id: chartId, data: team });
+                    html += renderTeamCard(team, chartId, idx + 1);
+                });
 
                 html += `
                         </div>
@@ -1481,91 +3413,96 @@
 
             container.innerHTML = html;
 
-            // Setup expand buttons
-            document.querySelectorAll('.show-more-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const expandId = btn.dataset.expand;
-                    const content = document.getElementById(expandId);
-                    const isExpanded = content.classList.contains('expanded');
-                    
-                    content.classList.toggle('expanded');
-                    btn.classList.toggle('expanded');
-                    btn.querySelector('.show-more-text').textContent = isExpanded 
-                        ? `Show ${content.querySelectorAll('.team-card').length} more`
-                        : 'Show less';
-                    
-                    // Create deferred charts when expanded
-                    if (!isExpanded) {
-                        chartsToCreate
-                            .filter(c => c.deferred && c.expandId === expandId)
-                            .forEach(({ id, data }) => {
-                                if (!Chart.getChart(id)) {
-                                    createChartAndReturn(id, data, null);
-                                }
-                            });
+            // Highlight active nav item on scroll
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Update nav
+                        const id = entry.target.id;
+                        document.querySelectorAll('.main-nav-item').forEach(item => {
+                            item.classList.toggle('active', item.getAttribute('href') === `#${id}`);
+                        });
                     }
                 });
-            });
+            }, { threshold: 0.2, rootMargin: '-80px 0px 0px 0px' });
 
-            // Create primary charts
+            document.querySelectorAll('.category-section, .matrix-section, .team-selector-section').forEach(section => observer.observe(section));
+
+            // Create all charts
             requestAnimationFrame(() => {
-                chartsToCreate
-                    .filter(c => !c.deferred)
-                    .forEach(({ id, data }) => createChartAndReturn(id, data, null));
-
-                // Animate sections in
-                const sections = document.querySelectorAll('.category-section');
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) entry.target.classList.add('visible');
-                    });
-                }, { threshold: 0.1 });
-
-                sections.forEach(section => observer.observe(section));
+                chartsToCreate.forEach(({ id, data }) => createChartAndReturn(id, data, null));
             });
         }
 
         function renderTeamCard(team, chartId, rank) {
             const offTrendClass = team.offSlope > 0.05 ? 'positive' : team.offSlope < -0.05 ? 'negative' : 'neutral';
             const defTrendClass = team.defSlope < -0.05 ? 'positive' : team.defSlope > 0.05 ? 'negative' : 'neutral';
+            const netRating = (team.netRating !== undefined) ? team.netRating : (team.offLevel - team.defLevel);
+            const netRatingClass = netRating > 0 ? 'positive' : netRating < 0 ? 'negative' : 'neutral';
+
+            // Calculate league rankings
+            const rankings = getTeamRankings(team);
 
             return `
                 <article class="team-card">
                     <div class="team-card-header">
-                        <h3 class="team-name">${team.name}</h3>
+                        <h3 class="team-name">${team.name}${renderAwardBadges(team)}</h3>
                         <div class="team-header-badges">
+                            <span class="archetype-badge">${team.archetype || 'Balanced'}</span>
                             <span class="team-rank">#${rank}</span>
                         </div>
                     </div>
                     <div class="team-card-body">
                         <p class="team-narrative">${generateNarrative(team)}</p>
                         <div class="team-stats">
+                            <div class="stat-box highlight">
+                                <div class="stat-label">Net Rating</div>
+                                <div class="stat-value ${netRatingClass}">${netRating > 0 ? '+' : ''}${netRating.toFixed(1)}</div>
+                                <div class="stat-ranking">#${rankings.netRating}</div>
+                            </div>
                             <div class="stat-box">
-                                <div class="stat-value neutral">${team.offLevel.toFixed(1)}</div>
                                 <div class="stat-label">Avg Off Rtg</div>
+                                <div class="stat-value neutral">${team.offLevel.toFixed(1)}</div>
+                                <div class="stat-ranking">#${rankings.offLevel}</div>
                             </div>
                             <div class="stat-box">
-                                <div class="stat-value neutral">${team.defLevel.toFixed(1)}</div>
                                 <div class="stat-label">Avg Def Rtg</div>
+                                <div class="stat-value neutral">${team.defLevel.toFixed(1)}</div>
+                                <div class="stat-ranking">#${rankings.defLevel}</div>
                             </div>
                             <div class="stat-box">
+                                <div class="stat-label">Off Consistency</div>
                                 <div class="stat-value ${team.offRugosity ? (team.offRugosity > 1.35 ? 'negative' : team.offRugosity < 1.15 ? 'positive' : 'neutral') : 'neutral'}">${team.offRugosity ? team.offRugosity.toFixed(3) : 'N/A'}</div>
-                                <div class="stat-label">Off Rugosity</div>
+                                <div class="stat-ranking">#${rankings.offRugosity}</div>
                             </div>
                             <div class="stat-box">
+                                <div class="stat-label">Def Consistency</div>
                                 <div class="stat-value ${team.defRugosity ? (team.defRugosity > 1.35 ? 'negative' : team.defRugosity < 1.15 ? 'positive' : 'neutral') : 'neutral'}">${team.defRugosity ? team.defRugosity.toFixed(3) : 'N/A'}</div>
-                                <div class="stat-label">Def Rugosity</div>
+                                <div class="stat-ranking">#${rankings.defRugosity}</div>
                             </div>
                             <div class="stat-box">
-                                <div class="stat-value ${offTrendClass}">${team.offSlope > 0 ? '+' : ''}${(team.offSlope * 10).toFixed(2)}</div>
                                 <div class="stat-label">Off Trend/10g</div>
+                                <div class="stat-value ${offTrendClass}">${team.offSlope > 0 ? '+' : ''}${(team.offSlope * 10).toFixed(2)}</div>
+                                <div class="stat-ranking">#${rankings.offSlope}</div>
                             </div>
                             <div class="stat-box">
-                                <div class="stat-value ${defTrendClass}">${team.defSlope > 0 ? '+' : ''}${(team.defSlope * 10).toFixed(2)}</div>
                                 <div class="stat-label">Def Trend/10g</div>
+                                <div class="stat-value ${defTrendClass}">${team.defSlope > 0 ? '+' : ''}${(team.defSlope * 10).toFixed(2)}</div>
+                                <div class="stat-ranking">#${rankings.defSlope}</div>
                             </div>
                         </div>
                         <div class="chart-container">
+                            <div class="chart-header">
+                                <span class="chart-title">Season Trend</span>
+                                <div class="chart-actions">
+                                    <label class="smooth-toggle">
+                                        <span class="smooth-toggle-label">Smooth</span>
+                                        <input type="checkbox" onchange="toggleSmoothCurve('${chartId}', '${team.name}', this.checked)">
+                                        <span class="smooth-toggle-switch"></span>
+                                    </label>
+                                    <button class="chart-action-btn" onclick="openCompareModal('${team.name}')">Compare</button>
+                                </div>
+                            </div>
                             <div class="chart-wrapper">
                                 <canvas id="${chartId}"></canvas>
                             </div>
@@ -1575,14 +3512,108 @@
             `;
         }
 
+        function getTeamRankings(team) {
+            if (!globalTeamsData) return {};
+            
+            // Higher is better for offense
+            const offLevelRank = globalTeamsData.filter(t => t.offLevel > team.offLevel).length + 1;
+            
+            // Lower is better for defense
+            const defLevelRank = globalTeamsData.filter(t => t.defLevel < team.defLevel).length + 1;
+            
+            // Higher net rating is better
+            const teamNetRating = (team.netRating !== undefined) ? team.netRating : (team.offLevel - team.defLevel);
+            const netRatingRank = globalTeamsData.filter(t => {
+                const tNetRating = (t.netRating !== undefined) ? t.netRating : (t.offLevel - t.defLevel);
+                return tNetRating > teamNetRating;
+            }).length + 1;
+            
+            // Lower rugosity is better (more consistent)
+            const offRugosityRank = globalTeamsData.filter(t => (t.offRugosity || 999) < (team.offRugosity || 999)).length + 1;
+            const defRugosityRank = globalTeamsData.filter(t => (t.defRugosity || 999) < (team.defRugosity || 999)).length + 1;
+            
+            // Higher slope is better for offense (improving)
+            const offSlopeRank = globalTeamsData.filter(t => t.offSlope > team.offSlope).length + 1;
+            
+            // Lower slope is better for defense (improving = getting lower)
+            const defSlopeRank = globalTeamsData.filter(t => t.defSlope < team.defSlope).length + 1;
+            
+            return {
+                offLevel: offLevelRank,
+                defLevel: defLevelRank,
+                netRating: netRatingRank,
+                offRugosity: offRugosityRank,
+                defRugosity: defRugosityRank,
+                offSlope: offSlopeRank,
+                defSlope: defSlopeRank
+            };
+        }
+
+        // Render award badges for a team
+        // Award definitions with labels, formulas, and descriptions
+        const AWARD_DEFINITIONS = {
+            'most_consistent': {
+                label: 'Most Consistent',
+                formula: 'min(offRug + defRug)',
+                desc: 'Lowest combined offensive and defensive rugosity. This team shows the steadiest performance game-to-game.'
+            },
+            'best_offense': {
+                label: 'Best Offense',
+                formula: 'max(offRtg - offRug×0.5)',
+                desc: 'Highest offensive rating adjusted for consistency. Rewards both high scoring and reliability.'
+            },
+            'best_defense': {
+                label: 'Best Defense',
+                formula: 'min(defRtg + defRug×0.5)',
+                desc: 'Lowest defensive rating adjusted for consistency. Rewards both stinginess and reliability.'
+            },
+            'on_the_rise': {
+                label: 'On the Rise',
+                formula: 'max(offSlope₂₀ - defSlope₂₀)',
+                desc: 'Most positive trend over last 20 games. Offense improving and/or defense tightening.'
+            },
+            'on_the_decline': {
+                label: 'On the Decline',
+                formula: 'min(offSlope₂₀ - defSlope₂₀)',
+                desc: 'Most negative trend over last 20 games. Offense declining and/or defense slipping.'
+            }
+        };
+
+        function renderAwardBadges(team) {
+            if (!team.awards || team.awards.length === 0) return '';
+
+            return team.awards.map(award => {
+                const def = AWARD_DEFINITIONS[award] || { label: award, formula: '', desc: '' };
+                return `<span class="award-badge ${award}">
+                    ${def.label}
+                    <span class="award-tooltip">
+                        <div class="award-tooltip-title">${def.label}</div>
+                        <div class="award-tooltip-formula">${def.formula}</div>
+                        <div class="award-tooltip-desc">${def.desc}</div>
+                    </span>
+                </span>`;
+            }).join('');
+        }
+
         // Main
         async function main() {
             try {
-                const response = await fetch(CONFIG.DATA_FILE);
+                // Load both datasets in parallel
+                const [response, smoothResponse] = await Promise.all([
+                    fetch(CONFIG.DATA_FILE),
+                    fetch(CONFIG.DATA_FILE_SMOOTH)
+                ]);
+
                 if (!response.ok) throw new Error(`Could not load ${CONFIG.DATA_FILE}`);
-                
+
                 const data = await response.json();
-                
+
+                // Load smooth data (window 10) if available
+                if (smoothResponse.ok) {
+                    const smoothData = await smoothResponse.json();
+                    globalTeamsDataSmooth = smoothData.teams;
+                }
+
                 document.getElementById('seasonLabel').textContent = `${data.season} Season`;
                 document.getElementById('gamesLabel').textContent = `${data.teams.reduce((sum, t) => sum + t.games, 0)} games analyzed`;
                 document.getElementById('dateLabel').textContent = `Data from ${new Date(data.generated).toLocaleDateString()}`;
@@ -1604,6 +3635,364 @@
         }
 
         window.addEventListener('load', main);
+
+        // ==========================================
+        // Compare Modal Functions
+        // ==========================================
+        let compareChart1 = null;
+        let compareChart2 = null;
+        let currentCompareTeam1 = null;
+
+        function openCompareModal(teamName) {
+            const team = globalTeamsData.find(t => t.name === teamName);
+            if (!team) return;
+
+            currentCompareTeam1 = team;
+            document.getElementById('compareTeam1Title').textContent = team.name;
+            
+            // Populate team select dropdown
+            const select = document.getElementById('compareTeamSelect');
+            select.innerHTML = '<option value="">Select a team...</option>';
+            globalTeamsData
+                .filter(t => t.name !== teamName)
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .forEach(t => {
+                    select.innerHTML += `<option value="${t.name}">${t.name}</option>`;
+                });
+
+            // Show modal
+            document.getElementById('compareModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Create chart 1
+            requestAnimationFrame(() => {
+                if (compareChart1) compareChart1.destroy();
+                compareChart1 = createSimpleChart('compareChart1', team);
+            });
+        }
+
+        function updateCompareChart2() {
+            const teamName = document.getElementById('compareTeamSelect').value;
+            if (!teamName) {
+                if (compareChart2) {
+                    compareChart2.destroy();
+                    compareChart2 = null;
+                }
+                return;
+            }
+
+            const team = globalTeamsData.find(t => t.name === teamName);
+            if (!team) return;
+
+            if (compareChart2) compareChart2.destroy();
+            compareChart2 = createSimpleChart('compareChart2', team);
+        }
+
+        function closeCompareModal() {
+            document.getElementById('compareModal').classList.remove('active');
+            document.body.style.overflow = '';
+            if (compareChart1) { compareChart1.destroy(); compareChart1 = null; }
+            if (compareChart2) { compareChart2.destroy(); compareChart2 = null; }
+        }
+
+        function createSimpleChart(canvasId, teamData) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const gamesPlayed = teamData.games || teamData.offSmooth.length;
+            
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: gamesPlayed}, (_, i) => i + 1),
+                    datasets: [
+                        {
+                            label: 'Offensive Rating',
+                            data: teamData.offSmooth.slice(0, gamesPlayed),
+                            borderColor: '#4a9eff',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: false,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Defensive Rating',
+                            data: teamData.defSmooth.slice(0, gamesPlayed),
+                            borderColor: '#ff6b6b',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: false,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    animation: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top', labels: { color: '#8a8f9d', font: { size: 11 } } },
+                        title: { display: true, text: teamData.name, color: '#f0f0f0', font: { size: 14, family: "'Playfair Display', serif" } }
+                    },
+                    scales: {
+                        x: { min: 1, max: gamesPlayed, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#5a5f6d', font: { size: 10 } }, title: { display: true, text: 'Game', color: '#5a5f6d', font: { size: 10 } } },
+                        y: { min: 100, max: 130, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#5a5f6d', font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // Customize Modal Functions
+        // ==========================================
+        let customizeChart = null;
+        let currentCustomizeTeam = null;
+        let customEvents = [];
+
+        function openCustomizeModal(teamName) {
+            const team = globalTeamsData.find(t => t.name === teamName);
+            if (!team) return;
+
+            currentCustomizeTeam = team;
+            customEvents = [];
+            
+            // Reset controls
+            document.getElementById('customXMin').value = 1;
+            document.getElementById('customXMax').value = team.games || 82;
+            document.getElementById('customYMin').value = 100;
+            document.getElementById('customYMax').value = 130;
+            document.getElementById('customShowOffRef').checked = false;
+            document.getElementById('customShowDefRef').checked = false;
+            document.getElementById('customBgColor').value = '#1a1e28';
+            document.getElementById('customOffColor').value = '#4a9eff';
+            document.getElementById('customDefColor').value = '#ff6b6b';
+            document.getElementById('customAxisColor').value = '#5a5f6d';
+            document.getElementById('customGridColor').value = '#2a2e38';
+            document.getElementById('customWidth').value = 700;
+            document.getElementById('customHeight').value = 350;
+            document.getElementById('customWidthValue').textContent = '700px';
+            document.getElementById('customHeightValue').textContent = '350px';
+            document.getElementById('eventsList').innerHTML = '';
+
+            // Show modal
+            document.getElementById('customizeModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Create preview chart
+            requestAnimationFrame(() => {
+                updateCustomizePreview();
+            });
+        }
+
+        function closeCustomizeModal() {
+            document.getElementById('customizeModal').classList.remove('active');
+            document.body.style.overflow = '';
+            if (customizeChart) { customizeChart.destroy(); customizeChart = null; }
+        }
+
+        function addCustomEvent() {
+            const game = parseInt(document.getElementById('eventGame').value);
+            const text = document.getElementById('eventText').value.trim();
+            
+            if (!game || !text || game < 1 || game > 82) return;
+
+            customEvents.push({ game, text });
+            renderEventsList();
+            updateCustomizePreview();
+            
+            document.getElementById('eventGame').value = '';
+            document.getElementById('eventText').value = '';
+        }
+
+        function removeCustomEvent(index) {
+            customEvents.splice(index, 1);
+            renderEventsList();
+            updateCustomizePreview();
+        }
+
+        function renderEventsList() {
+            const list = document.getElementById('eventsList');
+            list.innerHTML = customEvents.map((e, i) => `
+                <div class="event-item">
+                    <span class="event-item-game">G${e.game}</span>
+                    <span class="event-item-text">${e.text}</span>
+                    <button class="event-item-remove" onclick="removeCustomEvent(${i})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function updateCustomizePreview() {
+            if (!currentCustomizeTeam) return;
+
+            const team = currentCustomizeTeam;
+            const xMin = parseInt(document.getElementById('customXMin').value) || 1;
+            const xMax = parseInt(document.getElementById('customXMax').value) || 82;
+            const yMin = parseInt(document.getElementById('customYMin').value) || 100;
+            const yMax = parseInt(document.getElementById('customYMax').value) || 130;
+            const showOffRef = document.getElementById('customShowOffRef').checked;
+            const showDefRef = document.getElementById('customShowDefRef').checked;
+            const bgColor = document.getElementById('customBgColor').value;
+            const offColor = document.getElementById('customOffColor').value;
+            const defColor = document.getElementById('customDefColor').value;
+            const axisColor = document.getElementById('customAxisColor').value;
+            const gridColor = document.getElementById('customGridColor').value;
+            const chartWidth = parseInt(document.getElementById('customWidth').value) || 700;
+            const chartHeight = parseInt(document.getElementById('customHeight').value) || 350;
+
+            // Update size labels
+            document.getElementById('customWidthValue').textContent = chartWidth + 'px';
+            document.getElementById('customHeightValue').textContent = chartHeight + 'px';
+
+            // Update container size and background
+            const container = document.getElementById('customizePreviewContainer');
+            container.style.background = bgColor;
+            container.style.width = chartWidth + 'px';
+            container.style.height = chartHeight + 'px';
+
+            const ctx = document.getElementById('customizePreviewChart').getContext('2d');
+            
+            if (customizeChart) customizeChart.destroy();
+
+            const datasets = [
+                {
+                    label: 'Offensive Rating',
+                    data: team.offSmooth,
+                    borderColor: offColor,
+                    borderWidth: 3.5,
+                    tension: 0.3,
+                    fill: false,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Defensive Rating',
+                    data: team.defSmooth,
+                    borderColor: defColor,
+                    borderWidth: 3.5,
+                    tension: 0.3,
+                    fill: false,
+                    pointRadius: 0
+                }
+            ];
+
+            // Add reference lines
+            if (showOffRef && globalTeamsData) {
+                const offLevels = globalTeamsData.map(t => t.offLevel);
+                const stats = {
+                    max: Math.max(...offLevels),
+                    mean: offLevels.reduce((a, b) => a + b, 0) / offLevels.length,
+                    min: Math.min(...offLevels)
+                };
+                const fullX = Array.from({length: 82}, () => null);
+                datasets.unshift(
+                    { label: 'Off Max', data: fullX.map(() => stats.max), borderColor: 'rgba(212, 168, 83, 0.5)', borderWidth: 1, borderDash: [2, 4], pointRadius: 0 },
+                    { label: 'Off Mean', data: fullX.map(() => stats.mean), borderColor: 'rgba(212, 168, 83, 0.7)', borderWidth: 1.5, borderDash: [4, 2], pointRadius: 0 },
+                    { label: 'Off Min', data: fullX.map(() => stats.min), borderColor: 'rgba(212, 168, 83, 0.5)', borderWidth: 1, borderDash: [2, 4], pointRadius: 0 }
+                );
+            }
+
+            if (showDefRef && globalTeamsData) {
+                const defLevels = globalTeamsData.map(t => t.defLevel);
+                const stats = {
+                    max: Math.max(...defLevels),
+                    mean: defLevels.reduce((a, b) => a + b, 0) / defLevels.length,
+                    min: Math.min(...defLevels)
+                };
+                const fullX = Array.from({length: 82}, () => null);
+                datasets.unshift(
+                    { label: 'Def Max', data: fullX.map(() => stats.max), borderColor: 'rgba(212, 168, 83, 0.5)', borderWidth: 1, borderDash: [2, 4], pointRadius: 0 },
+                    { label: 'Def Mean', data: fullX.map(() => stats.mean), borderColor: 'rgba(212, 168, 83, 0.7)', borderWidth: 1.5, borderDash: [4, 2], pointRadius: 0 },
+                    { label: 'Def Min', data: fullX.map(() => stats.min), borderColor: 'rgba(212, 168, 83, 0.5)', borderWidth: 1, borderDash: [2, 4], pointRadius: 0 }
+                );
+            }
+
+            // Event annotations plugin
+            const eventAnnotations = {
+                id: 'eventAnnotations',
+                afterDraw(chart) {
+                    const ctx = chart.ctx;
+                    const xScale = chart.scales.x;
+                    const yScale = chart.scales.y;
+
+                    customEvents.forEach(event => {
+                        const x = xScale.getPixelForValue(event.game);
+                        
+                        ctx.save();
+                        ctx.strokeStyle = 'rgba(212, 168, 83, 0.7)';
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([4, 4]);
+                        ctx.beginPath();
+                        ctx.moveTo(x, yScale.top);
+                        ctx.lineTo(x, yScale.bottom);
+                        ctx.stroke();
+                        
+                        ctx.fillStyle = 'rgba(212, 168, 83, 0.9)';
+                        ctx.font = "10px 'Source Sans 3', sans-serif";
+                        ctx.textAlign = 'center';
+                        ctx.fillText(event.text, x, yScale.top - 5);
+                        ctx.restore();
+                    });
+                }
+            };
+
+            customizeChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: Array.from({length: 82}, (_, i) => i + 1), datasets },
+                plugins: [eventAnnotations],
+                options: {
+                    animation: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 20 } },
+                    plugins: {
+                        legend: { display: true, position: 'top', labels: { color: axisColor, filter: item => !item.text.includes('Max') && !item.text.includes('Min') && !item.text.includes('Mean') } },
+                        title: { display: true, text: team.name, color: axisColor, font: { size: 16, family: "'Playfair Display', serif" } }
+                    },
+                    scales: {
+                        x: { 
+                            min: xMin, 
+                            max: xMax, 
+                            grid: { color: gridColor }, 
+                            ticks: { color: axisColor }, 
+                            title: { display: true, text: 'Game Number', color: axisColor },
+                            border: { color: axisColor }
+                        },
+                        y: { 
+                            min: yMin, 
+                            max: yMax, 
+                            grid: { color: gridColor }, 
+                            ticks: { color: axisColor }, 
+                            title: { display: true, text: 'Rating (per 100 poss)', color: axisColor },
+                            border: { color: axisColor }
+                        }
+                    }
+                }
+            });
+        }
+
+        function publishCustomChart() {
+            if (!customizeChart) return;
+            
+            const link = document.createElement('a');
+            link.download = `${currentCustomizeTeam.name.replace(/\s+/g, '_')}_rhythm_chart.png`;
+            link.href = customizeChart.toBase64Image();
+            link.click();
+        }
+
+        // Close modals on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeCompareModal();
+                closeCustomizeModal();
+            }
+        });
+
+        // Close modals when clicking overlay background
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeCompareModal();
+                    closeCustomizeModal();
+                }
+            });
+        });
     </script>
 </body>
 </html>
