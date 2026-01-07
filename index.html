@@ -1077,10 +1077,7 @@
             cursor: help;
         }
         .award-badge .award-tooltip {
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
+            position: fixed;
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
             border-radius: 6px;
@@ -1088,10 +1085,10 @@
             width: 220px;
             opacity: 0;
             visibility: hidden;
+            pointer-events: none;
             transition: opacity 0.2s, visibility 0.2s;
-            z-index: 100;
-            margin-bottom: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
             text-align: left;
         }
         .award-badge:hover .award-tooltip {
@@ -1958,6 +1955,425 @@
             .category-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
             .team-card-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
             .team-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* ========== MOBILE REVAMP ========== */
+        @media (max-width: 600px) {
+            /* Hero section - smaller and more compact */
+            .hero {
+                min-height: 50vh;
+                padding: 2rem 1rem;
+            }
+
+            .hero-label {
+                font-size: 0.65rem;
+                letter-spacing: 0.2em;
+                margin-bottom: 1rem;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+                margin-bottom: 1rem;
+            }
+
+            .hero-subtitle {
+                font-size: 0.95rem;
+                margin-bottom: 1.5rem;
+                line-height: 1.5;
+            }
+
+            .hero-meta {
+                font-size: 0.7rem;
+                gap: 0.4rem;
+            }
+
+            /* Main content - tighter padding */
+            .main-content {
+                padding: 2rem 1rem;
+            }
+
+            .section-intro {
+                margin-bottom: 2rem;
+            }
+
+            .section-intro h2 {
+                font-size: 1.5rem;
+            }
+
+            .section-intro p {
+                font-size: 0.95rem;
+            }
+
+            /* Category sections */
+            .category-section {
+                margin-bottom: 3rem;
+            }
+
+            .category-header {
+                margin-bottom: 1rem;
+                padding-bottom: 0.75rem;
+            }
+
+            .category-title {
+                font-size: 1.25rem;
+            }
+
+            .category-description {
+                font-size: 0.85rem;
+            }
+
+            .tier-count {
+                font-size: 0.7rem;
+                padding: 0.35rem 0.75rem;
+            }
+
+            /* Tier intro */
+            .tier-intro {
+                padding: 1.25rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .tier-intro-title {
+                font-size: 1.4rem;
+            }
+
+            .tier-intro-description {
+                font-size: 0.9rem;
+            }
+
+            /* Team cards - compact design */
+            .team-card {
+                border-radius: 12px;
+            }
+
+            .team-card-header {
+                padding: 1rem;
+                gap: 0.5rem;
+            }
+
+            .team-name {
+                font-size: 1.15rem;
+            }
+
+            .team-rank {
+                font-size: 0.65rem;
+                padding: 0.2rem 0.5rem;
+            }
+
+            .team-header-badges {
+                gap: 0.4rem;
+                flex-wrap: wrap;
+            }
+
+            .archetype-badge {
+                font-size: 0.6rem;
+                padding: 0.2rem 0.5rem;
+            }
+
+            .tier-badge {
+                font-size: 0.55rem;
+                padding: 0.15rem 0.4rem;
+            }
+
+            .award-badge {
+                font-size: 0.6rem;
+                padding: 0.1rem 0.3rem;
+                margin-left: 0.25rem;
+            }
+
+            .team-card-body {
+                padding: 1rem;
+            }
+
+            .team-narrative {
+                font-size: 0.9rem;
+                line-height: 1.6;
+                margin-bottom: 1rem;
+            }
+
+            /* Stats grid - compact */
+            .team-stats {
+                gap: 0.35rem;
+                margin-bottom: 1rem;
+            }
+
+            .stat-box {
+                padding: 0.4rem 0.25rem;
+                border-radius: 6px;
+            }
+
+            .stat-label {
+                font-size: 0.5rem;
+                letter-spacing: 0.02em;
+            }
+
+            .stat-value {
+                font-size: 0.9rem;
+            }
+
+            .stat-ranking {
+                font-size: 0.5rem;
+            }
+
+            /* Charts - compact */
+            .chart-container {
+                padding: 0.75rem;
+                border-radius: 8px;
+                margin-top: 0.75rem;
+            }
+
+            .chart-title {
+                font-size: 0.85rem;
+            }
+
+            .chart-action-btn {
+                font-size: 0.65rem;
+                padding: 0.3rem 0.5rem;
+            }
+
+            .smooth-toggle {
+                font-size: 0.65rem;
+            }
+
+            .smooth-toggle-switch {
+                width: 28px;
+                height: 16px;
+            }
+
+            .smooth-toggle-switch::after {
+                width: 10px;
+                height: 10px;
+            }
+
+            .smooth-toggle input:checked + .smooth-toggle-switch::after {
+                left: 14px;
+            }
+
+            /* Matrix section */
+            .matrix-section {
+                padding: 1rem;
+                margin-bottom: 2rem;
+            }
+
+            .matrix-title {
+                font-size: 1.2rem;
+            }
+
+            .matrix-subtitle {
+                font-size: 0.85rem;
+            }
+
+            .matrix-quadrant {
+                padding: 0.75rem;
+            }
+
+            .quadrant-title {
+                font-size: 0.7rem;
+            }
+
+            .matrix-cell-teams {
+                gap: 0.15rem;
+            }
+
+            .matrix-team-dot {
+                width: 6px;
+                height: 6px;
+            }
+
+            .matrix-legend {
+                gap: 0.5rem;
+                margin-top: 1rem;
+                padding-top: 1rem;
+            }
+
+            .matrix-legend-item {
+                font-size: 0.65rem;
+            }
+
+            /* Methods section */
+            .methods-section {
+                padding: 1.5rem;
+            }
+
+            .methods-title {
+                font-size: 1.3rem;
+            }
+
+            .methods-subtitle {
+                font-size: 1rem;
+            }
+
+            .methods-text {
+                font-size: 0.85rem;
+            }
+
+            .methods-formula {
+                font-size: 0.75rem;
+                padding: 0.75rem 1rem;
+            }
+
+            .methods-list {
+                font-size: 0.85rem;
+                padding-left: 1rem;
+            }
+
+            /* Show more button */
+            .show-more-btn {
+                padding: 0.75rem;
+                font-size: 0.85rem;
+            }
+
+            /* Page overlays */
+            .page-overlay-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .page-overlay-title {
+                font-size: 1rem;
+            }
+
+            .page-close-btn {
+                font-size: 0.75rem;
+                padding: 0.4rem 0.75rem;
+            }
+
+            .page-overlay-content {
+                padding: 1.5rem 1rem;
+            }
+
+            /* Tooltip adjustments for mobile */
+            .award-badge .award-tooltip {
+                width: 180px;
+                padding: 0.5rem 0.6rem;
+            }
+
+            .award-tooltip-title {
+                font-size: 0.7rem;
+            }
+
+            .award-tooltip-formula {
+                font-size: 0.6rem;
+            }
+
+            .award-tooltip-desc {
+                font-size: 0.65rem;
+            }
+
+            /* Data rankings */
+            .data-rankings-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .data-ranking-card {
+                padding: 0.75rem;
+            }
+
+            .data-ranking-badge {
+                font-size: 0.6rem;
+            }
+
+            .data-ranking-title {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Extra small devices */
+        @media (max-width: 400px) {
+            .hero-title {
+                font-size: 1.75rem;
+            }
+
+            .hero-subtitle {
+                font-size: 0.85rem;
+            }
+
+            .team-name {
+                font-size: 1rem;
+            }
+
+            .team-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stat-value {
+                font-size: 0.8rem;
+            }
+
+            .stat-label {
+                font-size: 0.45rem;
+            }
+
+            .main-nav-brand {
+                font-size: 0.8rem;
+            }
+
+            .main-nav-item {
+                padding: 0.3rem 0.4rem;
+                font-size: 0.7rem;
+            }
+
+            .category-title {
+                font-size: 1.1rem;
+            }
+
+            .chart-container {
+                padding: 0.5rem;
+            }
+
+            .chart-actions {
+                flex-direction: column;
+            }
+
+            .chart-action-btn {
+                width: 100%;
+            }
+
+            /* Loading screen - compact */
+            .loading-logo {
+                font-size: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .loading-court {
+                width: 140px;
+                height: 80px;
+                margin-bottom: 1.5rem;
+            }
+
+            .court-center {
+                width: 28px;
+                height: 28px;
+            }
+
+            .basketball {
+                width: 14px;
+                height: 14px;
+            }
+
+            .loading-text {
+                font-size: 0.75rem;
+            }
+
+            /* Modal adjustments */
+            .modal-content {
+                max-height: 90vh;
+                margin: 5vh auto;
+            }
+
+            .modal-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .modal-title {
+                font-size: 1.1rem;
+            }
+
+            .modal-close {
+                width: 28px;
+                height: 28px;
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
@@ -3993,6 +4409,41 @@
                 }
             });
         });
+
+        // Position award badge tooltips with fixed positioning
+        function setupTooltipPositioning() {
+            document.addEventListener('mouseenter', (e) => {
+                const badge = e.target.closest('.award-badge');
+                if (!badge) return;
+
+                const tooltip = badge.querySelector('.award-tooltip');
+                if (!tooltip) return;
+
+                const rect = badge.getBoundingClientRect();
+                const tooltipWidth = 220;
+
+                // Position above the badge
+                let top = rect.top - 8;
+                let left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+
+                // Keep within viewport horizontally
+                if (left < 10) left = 10;
+                if (left + tooltipWidth > window.innerWidth - 10) {
+                    left = window.innerWidth - tooltipWidth - 10;
+                }
+
+                // Position below if no room above
+                if (top < 100) {
+                    tooltip.style.top = (rect.bottom + 8) + 'px';
+                } else {
+                    tooltip.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+                    tooltip.style.top = 'auto';
+                }
+
+                tooltip.style.left = left + 'px';
+            }, true);
+        }
+        setupTooltipPositioning();
     </script>
 </body>
 </html>
