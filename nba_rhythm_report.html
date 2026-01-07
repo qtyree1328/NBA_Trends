@@ -317,6 +317,58 @@
         /* Team Cards */
         .team-cards { display: grid; gap: 2rem; }
 
+        /* Show More Button */
+        .show-more-container {
+            width: 100%;
+        }
+
+        .show-more-btn {
+            width: 100%;
+            background: var(--bg-elevated);
+            border: 1px dashed var(--border-subtle);
+            border-radius: 12px;
+            padding: 1rem;
+            color: var(--text-secondary);
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .show-more-btn:hover {
+            border-color: var(--accent-gold-dim);
+            color: var(--text-primary);
+        }
+
+        .show-more-btn.expanded {
+            border-style: solid;
+            border-color: var(--accent-gold-dim);
+        }
+
+        .show-more-icon {
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+        }
+
+        .show-more-btn.expanded .show-more-icon {
+            transform: rotate(180deg);
+        }
+
+        .expandable-content {
+            display: none;
+            flex-direction: column;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .expandable-content.expanded {
+            display: flex;
+        }
+
         .team-card {
             background: var(--bg-card);
             border-radius: 16px;
@@ -750,118 +802,107 @@
             DATA_FILE: 'nba_trends_data.json'
         };
 
-        // Categories configuration
-        const CATEGORIES = [
+        // Archetype-based categories in specified order
+        const ARCHETYPES = [
             {
-                key: 'mostInconsistentOverall',
-                title: 'The Roller Coasters',
-                subtitle: 'Most Inconsistent Overall',
-                description: 'Teams whose performance swings wildly from game to game, keeping fans on the edge of their seats.',
-                narrativeTemplate: (team, rank) => {
-                    const severity = rank === 1 ? 'the most unpredictable' : 'one of the most volatile';
-                    return `The ${team.name} are ${severity} team in the league this season. Their game-to-game swings in both offensive and defensive efficiency suggest a team still searching for identity. With an inconsistency score of ${team.overallInconsistency.toFixed(2)}, watching them is never boring—but rarely comfortable.`;
-                },
-                sort: (a, b) => b.overallInconsistency - a.overallInconsistency
+                key: 'theMachine',
+                title: 'The Machine',
+                description: 'Championship-caliber. Elite on both ends, runs like clockwork.',
+                archetype: 'The Machine'
             },
             {
-                key: 'topOffenseInconsistent',
+                key: 'streakyContender',
+                title: 'Streaky Contender',
+                description: 'Elite talent but maddeningly inconsistent. High ceiling, low floor.',
+                archetype: 'Streaky Contender'
+            },
+            {
+                key: 'fireworksShow',
+                title: 'Fireworks Show',
+                description: 'Explosive offense but gives up buckets. Every game is a shootout.',
+                archetype: 'Fireworks Show'
+            },
+            {
+                key: 'feastOrFamine',
                 title: 'Feast or Famine',
-                subtitle: 'Inconsistent Top Offenses',
-                description: 'Elite offensive teams that can\'t seem to find consistency—brilliant one night, baffling the next.',
-                narrativeTemplate: (team, rank) => {
-                    return `The ${team.name} possess one of the league's most potent offenses, averaging ${team.offLevel.toFixed(1)} points per 100 possessions. However, their offensive rhythm is erratic—capable of explosive performances but equally prone to mysterious cold spells.`;
-                },
-                filter: (teams) => {
-                    const q75 = percentile(teams.map(t => t.offLevel), 75);
-                    return teams.filter(t => t.offLevel >= q75);
-                },
-                sort: (a, b) => b.offInconsistency - a.offInconsistency
+                description: 'Great offense on paper, but wildly inconsistent execution.',
+                archetype: 'Feast or Famine'
             },
             {
-                key: 'bottomOffenseInconsistent',
-                title: 'Searching for Answers',
-                subtitle: 'Inconsistent Struggling Offenses',
-                description: 'Teams with already-weak offenses made worse by unpredictability—finding rhythm remains elusive.',
-                narrativeTemplate: (team, rank) => {
-                    return `Averaging just ${team.offLevel.toFixed(1)} points per 100 possessions, the ${team.name} already face an uphill battle offensively. Their inconsistency compounds the problem—unable to string together good performances even when they find something that works.`;
-                },
-                filter: (teams) => {
-                    const q25 = percentile(teams.map(t => t.offLevel), 25);
-                    return teams.filter(t => t.offLevel <= q25);
-                },
-                sort: (a, b) => b.offInconsistency - a.offInconsistency
+                key: 'defensiveShell',
+                title: 'Defensive Shell',
+                description: "Can't score but makes every game a grind. Low-scoring rock fights.",
+                archetype: 'Defensive Shell'
             },
             {
-                key: 'bestDefenseInconsistent',
-                title: 'Defensive Enigmas',
-                subtitle: 'Inconsistent Elite Defenses',
-                description: 'Strong defensive teams that occasionally let their guard down—lapses in an otherwise stingy unit.',
-                narrativeTemplate: (team, rank) => {
-                    return `The ${team.name} have established themselves as a defensive force, holding opponents to just ${team.defLevel.toFixed(1)} points per 100 possessions. Yet their defensive intensity fluctuates more than expected from an elite unit.`;
-                },
-                filter: (teams) => {
-                    const q25 = percentile(teams.map(t => t.defLevel), 25);
-                    return teams.filter(t => t.defLevel <= q25);
-                },
-                sort: (a, b) => b.defInconsistency - a.defInconsistency
+                key: 'defensiveRollercoaster',
+                title: 'Defensive Rollercoaster',
+                description: 'Good defense overall but prone to random blowup games.',
+                archetype: 'Defensive Rollercoaster'
             },
             {
-                key: 'worstDefenseInconsistent',
-                title: 'Defensive Chaos',
-                subtitle: 'Inconsistent Porous Defenses',
-                description: 'Already-weak defenses made worse by unpredictability—opponents never know which version they\'ll face.',
-                narrativeTemplate: (team, rank) => {
-                    return `Surrendering ${team.defLevel.toFixed(1)} points per 100 possessions, the ${team.name} are among the league's weakest defensive teams. Their inconsistency means occasional competitive efforts are undone by complete breakdowns.`;
-                },
-                filter: (teams) => {
-                    const q75 = percentile(teams.map(t => t.defLevel), 75);
-                    return teams.filter(t => t.defLevel >= q75);
-                },
-                sort: (a, b) => b.defInconsistency - a.defInconsistency
+                key: 'defensiveFortress',
+                title: 'Defensive Fortress',
+                description: 'Wins with defense. May not wow offensively but locks opponents down.',
+                archetype: 'Defensive Fortress'
             },
             {
-                key: 'bestImprovement',
-                title: 'Rising Tides',
-                subtitle: 'Best Overall Improvement',
-                description: 'Teams trending in the right direction on both ends—building momentum as the season progresses.',
-                narrativeTemplate: (team, rank) => {
-                    const offTrend = team.offSlope > 0 ? 'improving' : 'declining';
-                    const defTrend = team.defSlope < 0 ? 'tightening up' : 'loosening';
-                    return `The ${team.name} are the season's feel-good story. Their offense is ${offTrend} at ${(team.offSlope * 10).toFixed(2)} points per 10 games, while their defense is ${defTrend}. This combined trajectory suggests a team hitting its stride.`;
-                },
-                sort: (a, b) => b.overallImprovement - a.overallImprovement
+                key: 'steadyContender',
+                title: 'Steady Contender',
+                description: 'Reliable playoff team. Strong offense, passable defense, no surprises.',
+                archetype: 'Steady Contender'
             },
             {
-                key: 'bestOffensiveImprovement',
-                title: 'Offensive Surge',
-                subtitle: 'Best Offensive Improvement',
-                description: 'Teams whose scoring machines are heating up—finding rhythm and chemistry as the season unfolds.',
-                narrativeTemplate: (team, rank) => {
-                    return `The ${team.name}'s offense is on a tear, improving at a rate of ${(team.offSlope * 10).toFixed(2)} points per 100 possessions every 10 games. Whether through personnel changes or gelling chemistry, their attack has become increasingly lethal.`;
-                },
-                sort: (a, b) => b.offSlope - a.offSlope
+                key: 'jekyllHyde',
+                title: 'Jekyll & Hyde',
+                description: 'Completely different team night-to-night on both ends. Chaos incarnate.',
+                archetype: 'Jekyll & Hyde'
             },
             {
-                key: 'bestDefensiveImprovement',
+                key: 'risingTide',
+                title: 'Rising Tide',
+                description: 'Getting better on both ends. Breakout candidate or midseason surge.',
+                archetype: 'Rising Tide'
+            },
+            {
+                key: 'fallingApart',
+                title: 'Falling Apart',
+                description: 'Trending wrong direction everywhere. Injuries? Chemistry issues?',
+                archetype: 'Falling Apart'
+            },
+            {
+                key: 'oneWaySurge',
+                title: 'One-Way Surge',
+                description: 'Offense clicking into gear while defense holds steady.',
+                archetype: 'One-Way Surge'
+            },
+            {
+                key: 'defensiveAwakening',
                 title: 'Defensive Awakening',
-                subtitle: 'Best Defensive Improvement',
-                description: 'Teams locking down as the season progresses—defensive identity crystallizing with each game.',
-                narrativeTemplate: (team, rank) => {
-                    return `The ${team.name} have undergone a defensive transformation, tightening the screws at a rate of ${(-team.defSlope * 10).toFixed(2)} points per 100 possessions every 10 games. What was once a liability is becoming a strength.`;
-                },
-                sort: (a, b) => a.defSlope - b.defSlope
-            },
-            {
-                key: 'worstImprovement',
-                title: 'Troubling Trajectories',
-                subtitle: 'Steepest Decline',
-                description: 'Teams heading in the wrong direction—warning signs flashing for concerned fanbases.',
-                narrativeTemplate: (team, rank) => {
-                    return `The ${team.name} face a concerning trend. Their overall trajectory shows decline on both ends of the floor, with an improvement score of ${team.overallImprovement.toFixed(2)}. Whether due to injuries, fatigue, or internal issues, the numbers paint a picture of regression.`;
-                },
-                sort: (a, b) => a.overallImprovement - b.overallImprovement
+                description: 'Finding defensive identity. Could become a playoff pest.',
+                archetype: 'Defensive Awakening'
             }
         ];
+
+        function generateNarrative(team) {
+            const archetype = team.archetype || 'Unclassified';
+            const narratives = {
+                'The Machine': `The ${team.name} are the gold standard this season—elite on both ends with remarkable consistency. Their offensive rating of ${team.offLevel.toFixed(1)} and defensive rating of ${team.defLevel.toFixed(1)} are both top-tier, and they deliver night after night.`,
+                'Streaky Contender': `The ${team.name} have all the talent to compete with anyone, but their volatile play makes them unpredictable. On their best nights, they're unstoppable. On their worst, they're puzzling.`,
+                'Fireworks Show': `Watching the ${team.name} is pure entertainment—they'll put up points in bunches but give up just as many. With an offensive rugosity of ${team.offRugosity?.toFixed(3) || 'N/A'}, expect wild swings.`,
+                'Feast or Famine': `The ${team.name} possess elite offensive talent but can't find consistency. One night they score 130, the next they struggle to crack 100. The offense comes and goes without warning.`,
+                'Defensive Shell': `The ${team.name} won't outscore you, but they'll make you work for every bucket. Their defense holds opponents to just ${team.defLevel.toFixed(1)} per 100 possessions, grinding games to a halt.`,
+                'Defensive Rollercoaster': `The ${team.name} have a strong defensive identity overall, but they're prone to inexplicable lapses. Some nights the defense is suffocating; others, it's nowhere to be found.`,
+                'Defensive Fortress': `The ${team.name} hang their hat on defense, holding opponents to ${team.defLevel.toFixed(1)} per 100 possessions with remarkable consistency. The offense is secondary to their lockdown identity.`,
+                'Steady Contender': `The ${team.name} are a model of reliability—strong offense (${team.offLevel.toFixed(1)} ORtg) with consistent execution. You know exactly what you're getting every night.`,
+                'Jekyll & Hyde': `The ${team.name} are impossible to predict. Both their offense and defense swing wildly from game to game, making them capable of beating or losing to anyone.`,
+                'Rising Tide': `The ${team.name} are on an upward trajectory. Both their offense and defense are improving as the season progresses—a team to watch as the playoffs approach.`,
+                'Falling Apart': `The ${team.name} are trending in the wrong direction on both ends. Whether it's injuries, chemistry, or fatigue, the numbers paint a concerning picture.`,
+                'One-Way Surge': `The ${team.name}'s offense is heating up, improving at ${(team.offSlope * 10).toFixed(2)} points per 10 games while their defense holds steady. The attack is finding its rhythm.`,
+                'Defensive Awakening': `The ${team.name} are discovering their defensive identity, tightening up at ${(-team.defSlope * 10).toFixed(2)} points per 10 games. A late-season defensive surge could make them dangerous.`
+            };
+            return narratives[archetype] || `The ${team.name} have shown a unique profile this season, defying easy categorization.`;
+        }
 
         // Utility functions
         function percentile(arr, p) {
@@ -1132,68 +1173,22 @@
         function createChartAndReturn(canvasId, teamData, overlayConfig = null) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             
-            // Build datasets
+            // Build datasets - overlays first (behind), then team data
             const datasets = [];
-            
-            // Smoothed data (main lines)
-            datasets.push({
-                label: 'Offensive Rating',
-                data: teamData.offSmooth,
-                borderColor: '#4a9eff',
-                borderWidth: 2.5,
-                tension: 0.3,
-                fill: false,
-                pointRadius: 0,
-                pointHoverRadius: 4
-            });
-            
-            datasets.push({
-                label: 'Defensive Rating',
-                data: teamData.defSmooth,
-                borderColor: '#ff6b6b',
-                borderWidth: 2.5,
-                tension: 0.3,
-                fill: false,
-                pointRadius: 0,
-                pointHoverRadius: 4
-            });
-            
-            // Trend lines
-            datasets.push({
-                label: 'Off Trend',
-                data: teamData.offTrend,
-                borderColor: 'rgba(74, 158, 255, 0.5)',
-                borderWidth: 1.5,
-                borderDash: [5, 5],
-                tension: 0,
-                fill: false,
-                pointRadius: 0
-            });
-            
-            datasets.push({
-                label: 'Def Trend',
-                data: teamData.defTrend,
-                borderColor: 'rgba(255, 107, 107, 0.5)',
-                borderWidth: 1.5,
-                borderDash: [5, 5],
-                tension: 0,
-                fill: false,
-                pointRadius: 0
-            });
 
-            // Add overlay datasets if configured
+            // Add overlay datasets FIRST if configured (so they render behind)
             if (overlayConfig && overlayConfig.enabled) {
-                const overlayColor = overlayConfig.type === 'offense' ? '74, 158, 255' : '255, 107, 107';
+                const overlayColor = '212, 168, 83'; // Gold/yellow for visibility
                 
                 if (overlayConfig.mode === 'statistical') {
                     // Statistical lines (horizontal lines across full 82 games)
                     const fullSeasonX = Array.from({length: 82}, (_, i) => i + 1);
                     
                     datasets.push({
-                        label: `League Max ${overlayConfig.type === 'offense' ? 'Off' : 'Def'}`,
+                        label: `League Max`,
                         data: fullSeasonX.map(() => overlayConfig.stats.max),
-                        borderColor: `rgba(${overlayColor}, 0.6)`,
-                        borderWidth: 1,
+                        borderColor: `rgba(${overlayColor}, 0.7)`,
+                        borderWidth: 1.5,
                         borderDash: [2, 4],
                         tension: 0,
                         fill: false,
@@ -1201,9 +1196,9 @@
                     });
                     
                     datasets.push({
-                        label: `League Mean ${overlayConfig.type === 'offense' ? 'Off' : 'Def'}`,
+                        label: `League Mean`,
                         data: fullSeasonX.map(() => overlayConfig.stats.mean),
-                        borderColor: `rgba(${overlayColor}, 0.8)`,
+                        borderColor: `rgba(${overlayColor}, 0.9)`,
                         borderWidth: 2,
                         borderDash: [6, 3],
                         tension: 0,
@@ -1212,25 +1207,25 @@
                     });
                     
                     datasets.push({
-                        label: `League Min ${overlayConfig.type === 'offense' ? 'Off' : 'Def'}`,
+                        label: `League Min`,
                         data: fullSeasonX.map(() => overlayConfig.stats.min),
-                        borderColor: `rgba(${overlayColor}, 0.6)`,
-                        borderWidth: 1,
+                        borderColor: `rgba(${overlayColor}, 0.7)`,
+                        borderWidth: 1.5,
                         borderDash: [2, 4],
                         tension: 0,
                         fill: false,
                         pointRadius: 0
                     });
                 } else if (overlayConfig.mode === 'teams') {
-                    // Actual team lines
+                    // Actual team lines (thinner)
                     const dataKey = overlayConfig.type === 'offense' ? 'offSmooth' : 'defSmooth';
                     
                     if (overlayConfig.teams.max) {
                         datasets.push({
                             label: `Best: ${overlayConfig.teams.max.name}`,
                             data: overlayConfig.teams.max[dataKey],
-                            borderColor: `rgba(${overlayColor}, 0.5)`,
-                            borderWidth: 1.5,
+                            borderColor: `rgba(${overlayColor}, 0.6)`,
+                            borderWidth: 1,
                             tension: 0.3,
                             fill: false,
                             pointRadius: 0
@@ -1241,8 +1236,8 @@
                         datasets.push({
                             label: `Avg: ${overlayConfig.teams.mean.name}`,
                             data: overlayConfig.teams.mean[dataKey],
-                            borderColor: `rgba(${overlayColor}, 0.7)`,
-                            borderWidth: 1.5,
+                            borderColor: `rgba(${overlayColor}, 0.8)`,
+                            borderWidth: 1,
                             borderDash: [4, 2],
                             tension: 0.3,
                             fill: false,
@@ -1254,8 +1249,8 @@
                         datasets.push({
                             label: `Worst: ${overlayConfig.teams.min.name}`,
                             data: overlayConfig.teams.min[dataKey],
-                            borderColor: `rgba(${overlayColor}, 0.5)`,
-                            borderWidth: 1.5,
+                            borderColor: `rgba(${overlayColor}, 0.6)`,
+                            borderWidth: 1,
                             tension: 0.3,
                             fill: false,
                             pointRadius: 0
@@ -1264,15 +1259,100 @@
                 }
             }
             
+            // Smoothed data (main lines - thicker)
+            datasets.push({
+                label: 'Offensive Rating',
+                data: teamData.offSmooth,
+                borderColor: '#4a9eff',
+                borderWidth: 3.5,
+                tension: 0.3,
+                fill: false,
+                pointRadius: 0,
+                pointHoverRadius: 4
+            });
+            
+            datasets.push({
+                label: 'Defensive Rating',
+                data: teamData.defSmooth,
+                borderColor: '#ff6b6b',
+                borderWidth: 3.5,
+                tension: 0.3,
+                fill: false,
+                pointRadius: 0,
+                pointHoverRadius: 4
+            });
+            
+            // Trend lines
+            datasets.push({
+                label: 'Off Trend',
+                data: teamData.offTrend,
+                borderColor: 'rgba(74, 158, 255, 0.5)',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                tension: 0,
+                fill: false,
+                pointRadius: 0
+            });
+            
+            datasets.push({
+                label: 'Def Trend',
+                data: teamData.defTrend,
+                borderColor: 'rgba(255, 107, 107, 0.5)',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                tension: 0,
+                fill: false,
+                pointRadius: 0
+            });
+
+            // Custom plugin to draw labels at end of overlay lines
+            const endLabelPlugin = {
+                id: 'endLabels',
+                afterDatasetsDraw(chart) {
+                    if (!overlayConfig || !overlayConfig.enabled || overlayConfig.mode !== 'statistical') return;
+                    
+                    const ctx = chart.ctx;
+                    const yScale = chart.scales.y;
+                    const xScale = chart.scales.x;
+                    
+                    ctx.save();
+                    ctx.font = "11px 'JetBrains Mono', monospace";
+                    ctx.fillStyle = 'rgba(212, 168, 83, 0.9)';
+                    ctx.textAlign = 'left';
+                    
+                    const xPos = xScale.right + 5;
+                    
+                    // Max label
+                    const maxY = yScale.getPixelForValue(overlayConfig.stats.max);
+                    ctx.fillText(`Max: ${overlayConfig.stats.max.toFixed(1)}`, xPos, maxY + 4);
+                    
+                    // Mean label
+                    const meanY = yScale.getPixelForValue(overlayConfig.stats.mean);
+                    ctx.fillText(`Avg: ${overlayConfig.stats.mean.toFixed(1)}`, xPos, meanY + 4);
+                    
+                    // Min label
+                    const minY = yScale.getPixelForValue(overlayConfig.stats.min);
+                    ctx.fillText(`Min: ${overlayConfig.stats.min.toFixed(1)}`, xPos, minY + 4);
+                    
+                    ctx.restore();
+                }
+            };
+            
             return new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: Array.from({length: 82}, (_, i) => i + 1),
                     datasets: datasets
                 },
+                plugins: [endLabelPlugin],
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            right: overlayConfig && overlayConfig.enabled && overlayConfig.mode === 'statistical' ? 70 : 0
+                        }
+                    },
                     interaction: { intersect: false, mode: 'index' },
                     plugins: {
                         legend: {
@@ -1297,11 +1377,9 @@
                                 title: (items) => `Game ${items[0].label}`,
                                 label: (item) => {
                                     if (item.dataset.label.includes('Trend')) return null;
+                                    if (item.dataset.label.includes('League')) return null;
                                     if (item.raw === undefined || item.raw === null) return null;
-                                    const label = item.dataset.label.includes('raw') 
-                                        ? item.dataset.label.replace(' (raw)', '') 
-                                        : item.dataset.label;
-                                    return `${label}: ${item.raw.toFixed(1)}`;
+                                    return `${item.dataset.label}: ${item.raw.toFixed(1)}`;
                                 }
                             }
                         }
@@ -1330,95 +1408,112 @@
             });
         }
 
-        function createChart(canvasId, teamData) {
-            createChartAndReturn(canvasId, teamData);
-        }
-
         function renderCategories(data) {
             const container = document.getElementById('categoriesContainer');
             let html = '';
             let chartIndex = 0;
             const chartsToCreate = [];
+            
+            // Track which teams have been assigned to prevent duplicates
+            const assignedTeams = new Set();
 
-            CATEGORIES.forEach((category, catIdx) => {
-                let filteredTeams = [...data.teams];
+            ARCHETYPES.forEach((archetype, catIdx) => {
+                // Find teams matching this archetype that haven't been assigned yet
+                const matchingTeams = data.teams.filter(t => 
+                    t.archetype === archetype.archetype && !assignedTeams.has(t.name)
+                );
                 
-                if (category.filter) {
-                    filteredTeams = category.filter(filteredTeams);
-                }
+                if (matchingTeams.length === 0) return;
                 
-                filteredTeams.sort(category.sort);
-                const topTeams = filteredTeams.slice(0, CONFIG.TOPK);
+                // Mark these teams as assigned
+                matchingTeams.forEach(t => assignedTeams.add(t.name));
+                
+                // Get top 3 (or fewer if not available)
+                const topTeams = matchingTeams.slice(0, 3);
+                const primaryTeam = topTeams[0];
+                const additionalTeams = topTeams.slice(1);
 
-                if (topTeams.length === 0) return;
+                const chartId = `chart-${chartIndex++}`;
+                chartsToCreate.push({ id: chartId, data: primaryTeam });
 
                 html += `
                     <section class="category-section" data-category="${catIdx}">
                         <div class="category-header">
                             <span class="category-number">${String(catIdx + 1).padStart(2, '0')}</span>
                             <div class="category-title-group">
-                                <h2 class="category-title">${category.title}</h2>
-                                <p class="category-description">${category.description}</p>
+                                <h2 class="category-title">${archetype.title}</h2>
+                                <p class="category-description">${archetype.description}</p>
                             </div>
                         </div>
                         <div class="team-cards">
+                            ${renderTeamCard(primaryTeam, chartId, 1)}
                 `;
 
-                topTeams.forEach((team, rank) => {
-                    const chartId = `chart-${chartIndex++}`;
-                    chartsToCreate.push({ id: chartId, data: team });
-
-                    const offTrendClass = team.offSlope > 0.05 ? 'positive' : team.offSlope < -0.05 ? 'negative' : 'neutral';
-                    const defTrendClass = team.defSlope < -0.05 ? 'positive' : team.defSlope > 0.05 ? 'negative' : 'neutral';
-
+                // Add expandable section if there are more teams
+                if (additionalTeams.length > 0) {
+                    const expandId = `expand-${catIdx}`;
                     html += `
-                        <article class="team-card">
-                            <div class="team-card-header">
-                                <h3 class="team-name">${team.name}</h3>
-                                <span class="team-rank">#${rank + 1} in category</span>
-                            </div>
-                            <div class="team-card-body">
-                                <p class="team-narrative">${category.narrativeTemplate(team, rank + 1)}</p>
-                                <div class="team-stats">
-                                    <div class="stat-box">
-                                        <div class="stat-value neutral">${team.offLevel.toFixed(1)}</div>
-                                        <div class="stat-label">Avg Off Rtg</div>
-                                    </div>
-                                    <div class="stat-box">
-                                        <div class="stat-value neutral">${team.defLevel.toFixed(1)}</div>
-                                        <div class="stat-label">Avg Def Rtg</div>
-                                    </div>
-                                    <div class="stat-box">
-                                        <div class="stat-value ${offTrendClass}">${team.offSlope > 0 ? '+' : ''}${(team.offSlope * 10).toFixed(2)}</div>
-                                        <div class="stat-label">Off Trend/10g</div>
-                                    </div>
-                                    <div class="stat-box">
-                                        <div class="stat-value ${defTrendClass}">${team.defSlope > 0 ? '+' : ''}${(team.defSlope * 10).toFixed(2)}</div>
-                                        <div class="stat-label">Def Trend/10g</div>
-                                    </div>
-                                    <div class="stat-box">
-                                        <div class="stat-value neutral">${team.games}</div>
-                                        <div class="stat-label">Games</div>
-                                    </div>
-                                </div>
-                                <div class="chart-container">
-                                    <div class="chart-wrapper">
-                                        <canvas id="${chartId}"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </article>
+                        <div class="show-more-container">
+                            <button class="show-more-btn" data-expand="${expandId}">
+                                <span class="show-more-text">Show ${additionalTeams.length} more</span>
+                                <span class="show-more-icon">▼</span>
+                            </button>
+                            <div class="expandable-content" id="${expandId}">
                     `;
-                });
+                    
+                    additionalTeams.forEach((team, idx) => {
+                        const additionalChartId = `chart-${chartIndex++}`;
+                        chartsToCreate.push({ id: additionalChartId, data: team, deferred: true, expandId: expandId });
+                        html += renderTeamCard(team, additionalChartId, idx + 2);
+                    });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
 
-                html += `</div></section>`;
+                html += `
+                        </div>
+                    </section>
+                `;
             });
 
             container.innerHTML = html;
 
-            requestAnimationFrame(() => {
-                chartsToCreate.forEach(({ id, data }) => createChart(id, data));
+            // Setup expand buttons
+            document.querySelectorAll('.show-more-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const expandId = btn.dataset.expand;
+                    const content = document.getElementById(expandId);
+                    const isExpanded = content.classList.contains('expanded');
+                    
+                    content.classList.toggle('expanded');
+                    btn.classList.toggle('expanded');
+                    btn.querySelector('.show-more-text').textContent = isExpanded 
+                        ? `Show ${content.querySelectorAll('.team-card').length} more`
+                        : 'Show less';
+                    
+                    // Create deferred charts when expanded
+                    if (!isExpanded) {
+                        chartsToCreate
+                            .filter(c => c.deferred && c.expandId === expandId)
+                            .forEach(({ id, data }) => {
+                                if (!Chart.getChart(id)) {
+                                    createChartAndReturn(id, data, null);
+                                }
+                            });
+                    }
+                });
+            });
 
+            // Create primary charts
+            requestAnimationFrame(() => {
+                chartsToCreate
+                    .filter(c => !c.deferred)
+                    .forEach(({ id, data }) => createChartAndReturn(id, data, null));
+
+                // Animate sections in
                 const sections = document.querySelectorAll('.category-section');
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
@@ -1428,6 +1523,56 @@
 
                 sections.forEach(section => observer.observe(section));
             });
+        }
+
+        function renderTeamCard(team, chartId, rank) {
+            const offTrendClass = team.offSlope > 0.05 ? 'positive' : team.offSlope < -0.05 ? 'negative' : 'neutral';
+            const defTrendClass = team.defSlope < -0.05 ? 'positive' : team.defSlope > 0.05 ? 'negative' : 'neutral';
+
+            return `
+                <article class="team-card">
+                    <div class="team-card-header">
+                        <h3 class="team-name">${team.name}</h3>
+                        <div class="team-header-badges">
+                            <span class="team-rank">#${rank}</span>
+                        </div>
+                    </div>
+                    <div class="team-card-body">
+                        <p class="team-narrative">${generateNarrative(team)}</p>
+                        <div class="team-stats">
+                            <div class="stat-box">
+                                <div class="stat-value neutral">${team.offLevel.toFixed(1)}</div>
+                                <div class="stat-label">Avg Off Rtg</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value neutral">${team.defLevel.toFixed(1)}</div>
+                                <div class="stat-label">Avg Def Rtg</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value ${team.offRugosity ? (team.offRugosity > 1.35 ? 'negative' : team.offRugosity < 1.15 ? 'positive' : 'neutral') : 'neutral'}">${team.offRugosity ? team.offRugosity.toFixed(3) : 'N/A'}</div>
+                                <div class="stat-label">Off Rugosity</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value ${team.defRugosity ? (team.defRugosity > 1.35 ? 'negative' : team.defRugosity < 1.15 ? 'positive' : 'neutral') : 'neutral'}">${team.defRugosity ? team.defRugosity.toFixed(3) : 'N/A'}</div>
+                                <div class="stat-label">Def Rugosity</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value ${offTrendClass}">${team.offSlope > 0 ? '+' : ''}${(team.offSlope * 10).toFixed(2)}</div>
+                                <div class="stat-label">Off Trend/10g</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value ${defTrendClass}">${team.defSlope > 0 ? '+' : ''}${(team.defSlope * 10).toFixed(2)}</div>
+                                <div class="stat-label">Def Trend/10g</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-wrapper">
+                                <canvas id="${chartId}"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            `;
         }
 
         // Main
