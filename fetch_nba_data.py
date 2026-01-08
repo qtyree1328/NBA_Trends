@@ -10,7 +10,7 @@ from tqdm.auto import tqdm
 # PARAMETERS
 # ----------------------------
 SEASON = "2025-26"
-WINDOW = 7
+WINDOW = 5
 SEASON_TYPE = "Regular Season"
 SLEEP_BETWEEN_CALLS_SEC = 0.65
 
