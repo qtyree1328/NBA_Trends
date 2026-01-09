@@ -10,11 +10,11 @@ from tqdm.auto import tqdm
 # PARAMETERS
 # ----------------------------
 SEASON = "2025-26"
-WINDOW = 5
+WINDOW = 7
 SEASON_TYPE = "Regular Season"
 SLEEP_BETWEEN_CALLS_SEC = 0.65
 
-OUTPUT_FILE = "nba_trends_data.json"
+OUTPUT_FILE = f"nba_trends_data_window{WINDOW}.json"
 
 # ----------------------------
 # Helpers
