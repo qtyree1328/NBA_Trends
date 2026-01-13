@@ -431,9 +431,18 @@ if len(teams_data) > 0:
     for team in teams_data:
         team["awards"] = []
 
-    # Most Consistent: Lowest total rugosity (offense + defense)
-    most_consistent = min(teams_data, key=lambda t: t["offRugosity"] + t["defRugosity"])
-    most_consistent["awards"].append("most_consistent")
+    # Sort teams by net rating to identify top 10 and bottom 10
+    sorted_by_net = sorted(teams_data, key=lambda t: t["netRating"], reverse=True)
+    top_10_teams = sorted_by_net[:10]
+    bottom_10_teams = sorted_by_net[-10:]
+
+    # Consistently Good: Most consistent team among top 10 in net rating
+    consistently_good = min(top_10_teams, key=lambda t: t["offRugosity"] + t["defRugosity"])
+    consistently_good["awards"].append("consistently_good")
+
+    # Consistently Bad: Most consistent team among bottom 10 in net rating
+    consistently_bad = min(bottom_10_teams, key=lambda t: t["offRugosity"] + t["defRugosity"])
+    consistently_bad["awards"].append("consistently_bad")
 
     # Best Offense: Highest offensive rating adjusted by consistency
     # Higher off rating is better, lower rugosity is better (subtract it)
@@ -454,7 +463,8 @@ if len(teams_data) > 0:
     on_the_decline["awards"].append("on_the_decline")
 
     print(f"\n📊 League Awards:")
-    print(f"   Most Consistent: {most_consistent['name']}")
+    print(f"   Consistently Good: {consistently_good['name']}")
+    print(f"   Consistently Bad: {consistently_bad['name']}")
     print(f"   Best Offense: {best_offense['name']}")
     print(f"   Best Defense: {best_defense['name']}")
     print(f"   On the Rise: {on_the_rise['name']}")
