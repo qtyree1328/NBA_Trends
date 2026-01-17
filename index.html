@@ -1221,6 +1221,17 @@
             background: rgba(212, 168, 83, 0.1);
         }
 
+        /* Historical page nav link */
+        .main-nav-item.nav-historical {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.1));
+            border-color: rgba(168, 85, 247, 0.4);
+            color: #a855f7;
+        }
+        .main-nav-item.nav-historical:hover {
+            border-color: #a855f7;
+            background: rgba(168, 85, 247, 0.2);
+        }
+
         /* Data page rankings */
         .data-rankings-grid {
             display: grid;
@@ -2508,6 +2519,7 @@
             </div>
         </div>
         <div class="main-nav-right">
+            <a href="historical.html" class="main-nav-item nav-historical">Historical</a>
             <button class="main-nav-item nav-data" onclick="openDataPage()">Data</button>
             <button class="main-nav-item nav-methods" onclick="openMethodsPage()">Methods</button>
         </div>

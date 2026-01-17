@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical NBA Trends | Does Consistency Predict Playoff Success?</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23d4a853'/%3E%3Cline x1='2' y1='16' x2='30' y2='16' stroke='%230a0c10' stroke-width='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='30' stroke='%230a0c10' stroke-width='2'/%3E%3C/svg%3E">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Source+Sans+3:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-deep: #0a0c10;
+            --bg-card: #12151c;
+            --bg-elevated: #1a1e28;
+            --accent-gold: #d4a853;
+            --accent-gold-dim: #8a6f3a;
+            --accent-blue: #4a9eff;
+            --accent-red: #ff6b6b;
+            --accent-green: #4ade80;
+            --accent-purple: #a855f7;
+            --text-primary: #f0f0f0;
+            --text-secondary: #8a8f9d;
+            --text-muted: #5a5f6d;
+            --border-subtle: rgba(255,255,255,0.06);
+            --gradient-hero: linear-gradient(135deg, #0a0c10 0%, #1a1525 50%, #0a0c10 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 80px;
+        }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Navigation */
+        .main-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0.5rem 1rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .main-nav-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-weight: 700;
+            white-space: nowrap;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            background: linear-gradient(180deg, #ffffff 0%, #c0c0c0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .main-nav-divider {
+            width: 1px;
+            height: 24px;
+            background: var(--border-subtle);
+            flex-shrink: 0;
+        }
+
+        .main-nav-item {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 0.4rem 0.75rem;
+            color: var(--text-secondary);
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+        }
+
+        .main-nav-item:hover {
+            border-color: var(--accent-gold-dim);
+            color: var(--text-primary);
+            background: rgba(212, 168, 83, 0.1);
+        }
+
+        .main-nav-item.active {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            background: rgba(212, 168, 83, 0.15);
+        }
+
+        /* Hero */
+        .hero {
+            background: var(--gradient-hero);
+            min-height: 60vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 6rem 2rem 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at center, rgba(212, 168, 83, 0.03) 0%, transparent 50%);
+        }
+
+        .hero-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.3em;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .hero-title span {
+            display: block;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 650px;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: 2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hero-meta .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-gold);
+            border-radius: 50%;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .section {
+            margin-bottom: 5rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+        }
+
+        /* Key Findings */
+        .findings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .finding-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .finding-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-gold-dim);
+        }
+
+        .finding-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .finding-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .finding-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            margin-bottom: 0.75rem;
+        }
+
+        .finding-value.positive { color: var(--accent-green); }
+        .finding-value.negative { color: var(--accent-red); }
+        .finding-value.blue { color: var(--accent-blue); }
+
+        .finding-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Chart Containers */
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .chart-card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chart-card-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .control-group label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .control-group select {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            color: var(--text-primary);
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .control-group select:hover {
+            border-color: var(--accent-gold-dim);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+
+        .chart-stats {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            flex-wrap: wrap;
+        }
+
+        .stat-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-pill .stat-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .stat-pill .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        .stat-pill .stat-value.positive { color: var(--accent-green); }
+        .stat-pill .stat-value.negative { color: var(--accent-red); }
+
+        /* Two Column Layout */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading */
+        .loading-message {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-message h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        /* Error State */
+        .error-message {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--accent-red);
+            border-radius: 12px;
+        }
+
+        .error-message h3 {
+            color: var(--accent-red);
+            margin-bottom: 1rem;
+        }
+
+        /* Methodology Section */
+        .methods-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .methods-content h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .methods-content p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.7;
+        }
+
+        .methods-content code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-elevated);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: var(--accent-gold);
+        }
+
+        .formula-box {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent-gold);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--accent-gold);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero {
+                min-height: 50vh;
+                padding: 5rem 1.5rem 3rem;
+            }
+
+            .hero-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .main-content {
+                padding: 2rem 1rem;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+
+            .findings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="main-nav">
+        <span class="main-nav-brand">NBA TRENDS</span>
+        <div class="main-nav-divider"></div>
+        <a href="index.html" class="main-nav-item">Current Season</a>
+        <a href="historical.html" class="main-nav-item active">Historical Analysis</a>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <span class="hero-label">10 Seasons of Data</span>
+        <h1 class="hero-title"><span>Does Consistency<br>Win Championships?</span></h1>
+        <p class="hero-subtitle">Analyzing whether game-to-game consistency (rugosity) predicts playoff success better than raw performance metrics like net rating.</p>
+        <div class="hero-meta" id="heroMeta">
+            <span><span class="dot"></span>Loading data...</span>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Loading State -->
+        <div class="loading-message" id="loadingState">
+            <h3>Loading Historical Data</h3>
+            <p>Analyzing 10 seasons of NBA performance data...</p>
+        </div>
+
+        <!-- Main Content (hidden until loaded) -->
+        <div id="mainContent" style="display: none;">
+            <!-- Key Findings Section -->
+            <section class="section" id="findingsSection">
+                <div class="section-header">
+                    <h2>Key Findings</h2>
+                    <p>What 10 seasons of data reveal about consistency and playoff success</p>
+                </div>
+                <div class="findings-grid" id="findingsGrid">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- Correlation Explorer -->
+            <section class="section" id="correlationSection">
+                <div class="section-header">
+                    <h2>Correlation Explorer</h2>
+                    <p>Compare how different metrics correlate with playoff wins</p>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Metric vs Playoff Wins</div>
+                            <div class="chart-card-subtitle">Each dot represents one team-season</div>
+                        </div>
+                        <div class="chart-controls">
+                            <div class="control-group">
+                                <label>Analysis Window</label>
+                                <select id="windowSelector">
+                                    <option value="10">Last 10 Games</option>
+                                    <option value="20">Last 20 Games</option>
+                                    <option value="30" selected>Last 30 Games</option>
+                                    <option value="40">Last 40 Games</option>
+                                    <option value="full">Full Season</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>X-Axis Metric</label>
+                                <select id="metricSelector">
+                                    <option value="netRating" selected>Net Rating</option>
+                                    <option value="adjustedRating">Adjusted Rating (NetRtg / Rugosity)</option>
+                                    <option value="weightedRating">Weighted Rating (NetRtg - Rug×0.5)</option>
+                                    <option value="rugosity">Combined Rugosity</option>
+                                    <option value="offRugosity">Offensive Rugosity</option>
+                                    <option value="defRugosity">Defensive Rugosity</option>
+                                    <option value="trendScore">Trend Score</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="scatterChart"></canvas>
+                    </div>
+                    <div class="chart-stats" id="scatterStats">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Window Comparison -->
+            <section class="section" id="windowSection">
+                <div class="section-header">
+                    <h2>Which Window Best Predicts Playoffs?</h2>
+                    <p>Comparing correlation strength across different analysis periods</p>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Correlation Strength by Window</div>
+                            <div class="chart-card-subtitle">Absolute correlation coefficient |r| with playoff wins</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="windowChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Side by Side Comparison -->
+            <section class="section" id="comparisonSection">
+                <div class="section-header">
+                    <h2>Net Rating vs Rugosity</h2>
+                    <p>Direct comparison of predictive power</p>
+                </div>
+
+                <div class="two-col">
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <div>
+                                <div class="chart-card-title">Net Rating</div>
+                                <div class="chart-card-subtitle">Higher = better team</div>
+                            </div>
+                        </div>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="netRatingScatter"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <div>
+                                <div class="chart-card-title">Rugosity</div>
+                                <div class="chart-card-subtitle">Lower = more consistent</div>
+                            </div>
+                        </div>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="rugosityScatter"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Methodology -->
+            <section class="section" id="methodsSection">
+                <div class="section-header">
+                    <h2>Methodology</h2>
+                    <p>How the analysis was conducted</p>
+                </div>
+
+                <div class="methods-content">
+                    <h3>Rugosity (Consistency Metric)</h3>
+                    <p>Rugosity measures game-to-game volatility using the arc-to-chord ratio. It calculates the total path length of a team's rating changes divided by the straight-line distance from start to end.</p>
+                    <div class="formula-box">
+                        Rugosity = Path Length / Chord Length
+                    </div>
+                    <p>A rugosity of 1.0 means perfectly consistent (straight line). Higher values indicate more volatile, inconsistent performance. We sum offensive and defensive rugosity for a combined measure.</p>
+
+                    <h3>Net Rating</h3>
+                    <p>Net rating is the difference between offensive and defensive efficiency, measured as points scored/allowed per 100 possessions.</p>
+                    <div class="formula-box">
+                        Net Rating = Offensive Rating - Defensive Rating
+                    </div>
+
+                    <h3>Combined Metrics</h3>
+                    <p>To test whether consistency adds predictive power on top of raw performance, we created two combined metrics:</p>
+                    <div class="formula-box">
+                        Adjusted Rating = Net Rating / Rugosity
+                    </div>
+                    <p>This rewards teams that are both good AND consistent. A team with +5 net rating and low rugosity (1.5) would score higher than a +5 team with high rugosity (3.0).</p>
+                    <div class="formula-box">
+                        Weighted Rating = Net Rating - (Rugosity × 0.5)
+                    </div>
+                    <p>This penalizes inconsistency. A volatile team loses points for their high rugosity.</p>
+
+                    <h3>Analysis Windows</h3>
+                    <p>We calculate metrics using the last 10, 20, 30, 40 games of the regular season, plus the full season. This tests whether late-season performance is more predictive than full-season averages.</p>
+
+                    <h3>Playoff Performance</h3>
+                    <p>Playoff success is measured by total playoff wins (0-16). Teams that missed the playoffs receive 0 wins. This creates a continuous scale where the champion has 16 wins.</p>
+
+                    <h3>Playoff Teams Only Analysis</h3>
+                    <p>We also analyze just the teams that made the playoffs to answer: among playoff teams, does consistency predict deeper runs? This isolates the effect of consistency for teams that have already qualified.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>Data sourced from <a href="https://www.nba.com/stats" target="_blank">NBA Stats</a> via nba_api</p>
+        <p style="margin-top: 0.5rem;">Part of the <a href="index.html">NBA Trends</a> project</p>
+    </footer>
+
+    <script>
+        // Global data
+        let historicalData = null;
+        let scatterChart = null;
+        let windowChart = null;
+        let netRatingChart = null;
+        let rugosityChart = null;
+
+        // Color scheme
+        const COLORS = {
+            gold: '#d4a853',
+            goldDim: '#8a6f3a',
+            blue: '#4a9eff',
+            red: '#ff6b6b',
+            green: '#4ade80',
+            purple: '#a855f7',
+            textPrimary: '#f0f0f0',
+            textSecondary: '#8a8f9d',
+            textMuted: '#5a5f6d',
+            gridLines: 'rgba(255,255,255,0.06)'
+        };
+
+        // Chart.js defaults
+        Chart.defaults.color = COLORS.textSecondary;
+        Chart.defaults.borderColor = COLORS.gridLines;
+
+        // Load data
+        async function loadData() {
+            try {
+                const response = await fetch('historical_trends_data.json');
+                if (!response.ok) {
+                    throw new Error('Data file not found. Please run fetch_historical_data.py first.');
+                }
+                historicalData = await response.json();
+
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+
+                renderAll();
+            } catch (error) {
+                document.getElementById('loadingState').innerHTML = `
+                    <div class="error-message">
+                        <h3>Data Not Available</h3>
+                        <p>${error.message}</p>
+                        <p style="margin-top: 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+                            Run: <code>python fetch_historical_data.py</code>
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        // Get all team-seasons as flat array
+        function getAllTeamSeasons(windowKey = '30') {
+            const teams = [];
+            for (const season of historicalData.seasons) {
+                for (const team of season.teams) {
+                    if (team.windows && team.windows[windowKey]) {
+                        teams.push({
+                            ...team.windows[windowKey],
+                            name: team.name,
+                            season: season.season,
+                            playoffWins: team.playoffWins,
+                            madePlayoffs: team.madePlayoffs
+                        });
+                    }
+                }
+            }
+            return teams;
+        }
+
+        // Render all visualizations
+        function renderAll() {
+            renderHeroMeta();
+            renderFindings();
+            renderScatterChart();
+            renderWindowChart();
+            renderComparisonCharts();
+
+            // Set up event listeners
+            document.getElementById('windowSelector').addEventListener('change', updateScatterChart);
+            document.getElementById('metricSelector').addEventListener('change', updateScatterChart);
+        }
+
+        // Update hero meta
+        function renderHeroMeta() {
+            const summary = historicalData.summary;
+            document.getElementById('heroMeta').innerHTML = `
+                <span><span class="dot"></span>${historicalData.seasonsAnalyzed[0]} to ${historicalData.seasonsAnalyzed[historicalData.seasonsAnalyzed.length - 1]}</span>
+                <span><span class="dot"></span>${summary.totalTeamSeasons} Team-Seasons</span>
+                <span><span class="dot"></span>${summary.playoffTeams} Playoff Runs</span>
+            `;
+        }
+
+        // Render key findings
+        function renderFindings() {
+            const corr = historicalData.correlations['30'] || historicalData.correlations['full'];
+            const netR = corr.netRating_vs_playoffWins.r;
+            const rugR = corr.rugosity_vs_playoffWins.r;
+            const adjR = corr.adjustedRating_vs_playoffWins?.r || 0;
+            const weightedR = corr.weightedRating_vs_playoffWins?.r || 0;
+            const playoffOnly = corr.playoffTeamsOnly || {};
+            const bestWindow = historicalData.summary.bestCorrelationWindow;
+
+            // Determine if combining metrics helps
+            const combinedBetter = Math.abs(adjR) > Math.abs(netR) || Math.abs(weightedR) > Math.abs(netR);
+            const bestCombined = Math.abs(adjR) > Math.abs(weightedR) ? adjR : weightedR;
+            const bestCombinedName = Math.abs(adjR) > Math.abs(weightedR) ? 'Adjusted' : 'Weighted';
+
+            // Playoff-only analysis
+            const playoffRugR = playoffOnly.rugosity_vs_wins?.r || 0;
+            const playoffNetR = playoffOnly.netRating_vs_wins?.r || 0;
+
+            document.getElementById('findingsGrid').innerHTML = `
+                <div class="finding-card">
+                    <div class="finding-icon">📊</div>
+                    <div class="finding-title">Net Rating Alone</div>
+                    <div class="finding-value blue">r = ${netR >= 0 ? '+' : ''}${netR.toFixed(3)}</div>
+                    <div class="finding-desc">Net rating shows ${Math.abs(netR) > 0.5 ? 'strong' : 'moderate'} positive correlation with playoff wins</div>
+                </div>
+                <div class="finding-card">
+                    <div class="finding-icon">🔗</div>
+                    <div class="finding-title">Does Consistency Help?</div>
+                    <div class="finding-value ${combinedBetter ? 'positive' : ''}">${combinedBetter ? 'Yes' : 'No'} (r = ${bestCombined >= 0 ? '+' : ''}${bestCombined.toFixed(3)})</div>
+                    <div class="finding-desc">${combinedBetter
+                        ? `Combining net rating with consistency (${bestCombinedName}) improves predictions by ${((Math.abs(bestCombined) - Math.abs(netR)) * 100).toFixed(1)}%`
+                        : 'Adding consistency to net rating does not improve playoff predictions'}</div>
+                </div>
+                <div class="finding-card">
+                    <div class="finding-icon">🏀</div>
+                    <div class="finding-title">Among Playoff Teams</div>
+                    <div class="finding-value ${playoffRugR < 0 ? 'positive' : ''}">Rug: ${playoffRugR >= 0 ? '+' : ''}${playoffRugR.toFixed(3)}</div>
+                    <div class="finding-desc">${playoffRugR < -0.1
+                        ? 'Consistent playoff teams do go deeper! Lower rugosity correlates with more playoff wins.'
+                        : 'Among playoff teams, consistency doesn\'t strongly predict deeper runs.'}</div>
+                </div>
+                <div class="finding-card">
+                    <div class="finding-icon">📈</div>
+                    <div class="finding-title">Rugosity Alone</div>
+                    <div class="finding-value ${rugR < 0 ? 'negative' : ''}">r = ${rugR >= 0 ? '+' : ''}${rugR.toFixed(3)}</div>
+                    <div class="finding-desc">${Math.abs(rugR) < 0.1
+                        ? 'Consistency alone has almost no correlation with playoff success (good & bad teams can both be consistent)'
+                        : rugR < 0 ? 'More consistent teams tend to win more playoff games' : 'Unexpectedly, more volatile teams do slightly better'}</div>
+                </div>
+                <div class="finding-card">
+                    <div class="finding-icon">⏱️</div>
+                    <div class="finding-title">Optimal Window</div>
+                    <div class="finding-value">${bestWindow === 'full' ? 'Full Season' : 'Last ' + bestWindow}</div>
+                    <div class="finding-desc">The ${bestWindow === 'full' ? 'full season' : 'last ' + bestWindow + ' games'} provides the strongest correlation with playoff performance</div>
+                </div>
+                <div class="finding-card">
+                    <div class="finding-icon">🏆</div>
+                    <div class="finding-title">The Bottom Line</div>
+                    <div class="finding-value">${Math.abs(netR) > 0.5 ? 'Be Good' : 'Mixed'}</div>
+                    <div class="finding-desc">${Math.abs(netR) > Math.abs(rugR) * 2
+                        ? 'Being good (high net rating) matters far more than being consistent for playoff success.'
+                        : 'Both quality and consistency matter for playoff success.'}</div>
+                </div>
+            `;
+        }
+
+        // Calculate Pearson correlation
+        function pearsonCorrelation(x, y) {
+            const n = x.length;
+            const sumX = x.reduce((a, b) => a + b, 0);
+            const sumY = y.reduce((a, b) => a + b, 0);
+            const sumXY = x.reduce((acc, xi, i) => acc + xi * y[i], 0);
+            const sumX2 = x.reduce((acc, xi) => acc + xi * xi, 0);
+            const sumY2 = y.reduce((acc, yi) => acc + yi * yi, 0);
+
+            const num = n * sumXY - sumX * sumY;
+            const den = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+
+            return den === 0 ? 0 : num / den;
+        }
+
+        // Render scatter chart
+        function renderScatterChart() {
+            const ctx = document.getElementById('scatterChart').getContext('2d');
+            const windowKey = document.getElementById('windowSelector').value;
+            const metric = document.getElementById('metricSelector').value;
+
+            const teams = getAllTeamSeasons(windowKey);
+            const xData = teams.map(t => t[metric]);
+            const yData = teams.map(t => t.playoffWins);
+
+            // Calculate regression
+            const n = xData.length;
+            const sumX = xData.reduce((a, b) => a + b, 0);
+            const sumY = yData.reduce((a, b) => a + b, 0);
+            const sumXY = xData.reduce((acc, x, i) => acc + x * yData[i], 0);
+            const sumX2 = xData.reduce((acc, x) => acc + x * x, 0);
+
+            const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+
+            const minX = Math.min(...xData);
+            const maxX = Math.max(...xData);
+
+            // Calculate correlation
+            const r = pearsonCorrelation(xData, yData);
+
+            if (scatterChart) scatterChart.destroy();
+
+            scatterChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Team-Seasons',
+                            data: teams.map(t => ({
+                                x: t[metric],
+                                y: t.playoffWins,
+                                team: t.name,
+                                season: t.season
+                            })),
+                            backgroundColor: teams.map(t =>
+                                t.playoffWins === 16 ? COLORS.gold :
+                                t.madePlayoffs ? COLORS.blue + '99' : COLORS.red + '66'
+                            ),
+                            pointRadius: teams.map(t => t.playoffWins === 16 ? 8 : 5),
+                            pointHoverRadius: 8
+                        },
+                        {
+                            label: 'Trend Line',
+                            data: [
+                                { x: minX, y: slope * minX + intercept },
+                                { x: maxX, y: slope * maxX + intercept }
+                            ],
+                            type: 'line',
+                            borderColor: COLORS.gold,
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    if (ctx.datasetIndex === 1) return null;
+                                    const point = ctx.raw;
+                                    return `${point.team} (${point.season}): ${point.y} playoff wins`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: getMetricLabel(metric),
+                                color: COLORS.textSecondary
+                            },
+                            grid: { color: COLORS.gridLines }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Playoff Wins',
+                                color: COLORS.textSecondary
+                            },
+                            min: 0,
+                            max: 18,
+                            grid: { color: COLORS.gridLines }
+                        }
+                    }
+                }
+            });
+
+            // Update stats
+            document.getElementById('scatterStats').innerHTML = `
+                <div class="stat-pill">
+                    <span class="stat-label">Correlation (r)</span>
+                    <span class="stat-value ${r > 0 ? 'positive' : 'negative'}">${r >= 0 ? '+' : ''}${r.toFixed(3)}</span>
+                </div>
+                <div class="stat-pill">
+                    <span class="stat-label">R-squared</span>
+                    <span class="stat-value">${(r * r * 100).toFixed(1)}%</span>
+                </div>
+                <div class="stat-pill">
+                    <span class="stat-label">Sample Size</span>
+                    <span class="stat-value">${n}</span>
+                </div>
+                <div class="stat-pill">
+                    <span class="stat-label">Legend</span>
+                    <span class="stat-value" style="font-size: 0.8rem; color: ${COLORS.textSecondary}">
+                        <span style="color: ${COLORS.gold}">●</span> Champions
+                        <span style="color: ${COLORS.blue}">●</span> Playoff
+                        <span style="color: ${COLORS.red}">●</span> Missed
+                    </span>
+                </div>
+            `;
+        }
+
+        function updateScatterChart() {
+            renderScatterChart();
+        }
+
+        function getMetricLabel(metric) {
+            const labels = {
+                'netRating': 'Net Rating (higher = better)',
+                'adjustedRating': 'Adjusted Rating (higher = better & consistent)',
+                'weightedRating': 'Weighted Rating (higher = better, penalizes inconsistency)',
+                'rugosity': 'Combined Rugosity (lower = more consistent)',
+                'offRugosity': 'Offensive Rugosity',
+                'defRugosity': 'Defensive Rugosity',
+                'trendScore': 'Trend Score (positive = improving)'
+            };
+            return labels[metric] || metric;
+        }
+
+        // Render window comparison chart
+        function renderWindowChart() {
+            const ctx = document.getElementById('windowChart').getContext('2d');
+            const correlations = historicalData.correlations;
+
+            const windows = ['10', '20', '30', '40', 'full'];
+            const windowLabels = ['Last 10', 'Last 20', 'Last 30', 'Last 40', 'Full Season'];
+
+            const netRatingCorrs = windows.map(w =>
+                correlations[w] ? Math.abs(correlations[w].netRating_vs_playoffWins.r) : 0
+            );
+            const adjustedCorrs = windows.map(w =>
+                correlations[w]?.adjustedRating_vs_playoffWins ? Math.abs(correlations[w].adjustedRating_vs_playoffWins.r) : 0
+            );
+            const weightedCorrs = windows.map(w =>
+                correlations[w]?.weightedRating_vs_playoffWins ? Math.abs(correlations[w].weightedRating_vs_playoffWins.r) : 0
+            );
+            const rugosityCorrs = windows.map(w =>
+                correlations[w] ? Math.abs(correlations[w].rugosity_vs_playoffWins.r) : 0
+            );
+
+            if (windowChart) windowChart.destroy();
+
+            windowChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: windowLabels,
+                    datasets: [
+                        {
+                            label: 'Net Rating |r|',
+                            data: netRatingCorrs,
+                            backgroundColor: COLORS.blue + 'cc',
+                            borderColor: COLORS.blue,
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Adjusted (Net/Rug) |r|',
+                            data: adjustedCorrs,
+                            backgroundColor: COLORS.green + 'cc',
+                            borderColor: COLORS.green,
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Weighted (Net-Rug) |r|',
+                            data: weightedCorrs,
+                            backgroundColor: COLORS.purple + 'cc',
+                            borderColor: COLORS.purple,
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Rugosity |r|',
+                            data: rugosityCorrs,
+                            backgroundColor: COLORS.red + 'cc',
+                            borderColor: COLORS.red,
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { color: COLORS.textSecondary }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: COLORS.gridLines }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: 'Correlation Strength |r|',
+                                color: COLORS.textSecondary
+                            },
+                            grid: { color: COLORS.gridLines }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render side-by-side comparison charts
+        function renderComparisonCharts() {
+            const teams = getAllTeamSeasons('30');
+
+            // Net Rating scatter
+            const netCtx = document.getElementById('netRatingScatter').getContext('2d');
+            if (netRatingChart) netRatingChart.destroy();
+
+            netRatingChart = new Chart(netCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        data: teams.map(t => ({ x: t.netRating, y: t.playoffWins })),
+                        backgroundColor: COLORS.blue + '99',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Net Rating', color: COLORS.textSecondary },
+                            grid: { color: COLORS.gridLines }
+                        },
+                        y: {
+                            title: { display: true, text: 'Playoff Wins', color: COLORS.textSecondary },
+                            min: 0, max: 18,
+                            grid: { color: COLORS.gridLines }
+                        }
+                    }
+                }
+            });
+
+            // Rugosity scatter
+            const rugCtx = document.getElementById('rugosityScatter').getContext('2d');
+            if (rugosityChart) rugosityChart.destroy();
+
+            rugosityChart = new Chart(rugCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        data: teams.map(t => ({ x: t.rugosity, y: t.playoffWins })),
+                        backgroundColor: COLORS.red + '99',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Rugosity (lower = consistent)', color: COLORS.textSecondary },
+                            grid: { color: COLORS.gridLines }
+                        },
+                        y: {
+                            title: { display: true, text: 'Playoff Wins', color: COLORS.textSecondary },
+                            min: 0, max: 18,
+                            grid: { color: COLORS.gridLines }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        loadData();
+    </script>
+</body>
+</html>
