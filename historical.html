@@ -577,13 +577,39 @@
                             <div class="control-group">
                                 <label>X-Axis Metric</label>
                                 <select id="metricSelector">
-                                    <option value="netRating" selected>Net Rating</option>
-                                    <option value="adjustedRating">Adjusted Rating (NetRtg / Rugosity)</option>
-                                    <option value="weightedRating">Weighted Rating (NetRtg - Rug×0.5)</option>
-                                    <option value="rugosity">Combined Rugosity</option>
-                                    <option value="offRugosity">Offensive Rugosity</option>
-                                    <option value="defRugosity">Defensive Rugosity</option>
-                                    <option value="trendScore">Trend Score</option>
+                                    <optgroup label="Core Metrics">
+                                        <option value="netRating" selected>Net Rating</option>
+                                        <option value="offLevel">Offensive Rating</option>
+                                        <option value="defLevel">Defensive Rating</option>
+                                    </optgroup>
+                                    <optgroup label="Combined (Rugosity)">
+                                        <option value="adjustedRating">Adjusted (NetRtg / Rugosity)</option>
+                                        <option value="weightedRating">Weighted (NetRtg - Rug×0.5)</option>
+                                    </optgroup>
+                                    <optgroup label="Combined (Std Dev)">
+                                        <option value="adjustedByStd">Adjusted (NetRtg / StdDev)</option>
+                                        <option value="weightedByStd">Weighted (NetRtg - Std×0.5)</option>
+                                    </optgroup>
+                                    <optgroup label="Consistency - Rugosity">
+                                        <option value="rugosity">Combined Rugosity</option>
+                                        <option value="offRugosity">Offensive Rugosity</option>
+                                        <option value="defRugosity">Defensive Rugosity</option>
+                                    </optgroup>
+                                    <optgroup label="Consistency - Std Dev">
+                                        <option value="stdDev">Combined Std Dev</option>
+                                        <option value="offStdDev">Offensive Std Dev</option>
+                                        <option value="defStdDev">Defensive Std Dev</option>
+                                    </optgroup>
+                                    <optgroup label="Consistency - Residual">
+                                        <option value="residualStd">Combined Residual Std</option>
+                                        <option value="offResidualStd">Offensive Residual Std</option>
+                                        <option value="defResidualStd">Defensive Residual Std</option>
+                                    </optgroup>
+                                    <optgroup label="Trends">
+                                        <option value="trendScore">Net Rating Trend</option>
+                                        <option value="offSlope">Offensive Trend</option>
+                                        <option value="defSlope">Defensive Trend</option>
+                                    </optgroup>
                                 </select>
                             </div>
                         </div>
@@ -651,6 +677,78 @@
                 </div>
             </section>
 
+            <!-- Badge Analysis -->
+            <section class="section" id="badgeSection">
+                <div class="section-header">
+                    <h2>Badge Performance Analysis</h2>
+                    <p>Do teams with specific badges perform better in the playoffs?</p>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Average Playoff Wins by Badge</div>
+                            <div class="chart-card-subtitle">Comparing badge winners to league average</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="badgeChart"></canvas>
+                    </div>
+                    <div id="badgeStats" class="chart-stats">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="findings-grid" id="badgeFindings">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- Archetype Analysis -->
+            <section class="section" id="archetypeSection">
+                <div class="section-header">
+                    <h2>Archetype Performance Analysis</h2>
+                    <p>Which team profiles perform best in the playoffs?</p>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Playoff Wins by Archetype</div>
+                            <div class="chart-card-subtitle">Based on offense/defense quality and consistency</div>
+                        </div>
+                        <div class="chart-controls">
+                            <div class="control-group">
+                                <label>Sort By</label>
+                                <select id="archetypeSortSelector">
+                                    <option value="avgWins" selected>Avg Playoff Wins</option>
+                                    <option value="count">Team Count</option>
+                                    <option value="playoffRate">Playoff Rate</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container" style="height: 500px;">
+                        <canvas id="archetypeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="methods-content" style="margin-top: 2rem;">
+                    <h3>Understanding Archetypes</h3>
+                    <p>Each team is classified into one of 16 archetypes based on four binary dimensions:</p>
+                    <div class="formula-box">
+                        offHigh (above median) | defHigh (above median) | offConsistent (below median rugosity) | defConsistent (below median rugosity)
+                    </div>
+                    <p>Examples:</p>
+                    <ul style="color: var(--text-secondary); margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li><strong>Elite Consistent:</strong> High offense + High defense + Consistent on both ends</li>
+                        <li><strong>Elite Volatile:</strong> High offense + High defense + Inconsistent play</li>
+                        <li><strong>Offensive Juggernaut:</strong> Great offense, poor defense, varies by consistency</li>
+                        <li><strong>Defensive Anchor:</strong> Great defense, poor offense, varies by consistency</li>
+                    </ul>
+                </div>
+            </section>
+
             <!-- Methodology -->
             <section class="section" id="methodsSection">
                 <div class="section-header">
@@ -659,29 +757,67 @@
                 </div>
 
                 <div class="methods-content">
-                    <h3>Rugosity (Consistency Metric)</h3>
-                    <p>Rugosity measures game-to-game volatility using the arc-to-chord ratio. It calculates the total path length of a team's rating changes divided by the straight-line distance from start to end.</p>
-                    <div class="formula-box">
-                        Rugosity = Path Length / Chord Length
-                    </div>
-                    <p>A rugosity of 1.0 means perfectly consistent (straight line). Higher values indicate more volatile, inconsistent performance. We sum offensive and defensive rugosity for a combined measure.</p>
-
-                    <h3>Net Rating</h3>
+                    <h3>Core Metrics</h3>
                     <p>Net rating is the difference between offensive and defensive efficiency, measured as points scored/allowed per 100 possessions.</p>
                     <div class="formula-box">
                         Net Rating = Offensive Rating - Defensive Rating
                     </div>
 
+                    <h3>Consistency Metrics</h3>
+                    <p>We test three different approaches to measuring consistency:</p>
+
+                    <p><strong>1. Rugosity</strong> - Arc-to-chord ratio measuring path volatility</p>
+                    <div class="formula-box">
+                        Rugosity = Path Length / Chord Length
+                    </div>
+                    <p>A rugosity of 1.0 means perfectly consistent (straight line). Higher values indicate more volatile performance.</p>
+
+                    <p><strong>2. Standard Deviation</strong> - Classic volatility measure</p>
+                    <div class="formula-box">
+                        Std Dev = sqrt(sum((x - mean)²) / n)
+                    </div>
+                    <p>Measures how much ratings vary from the average. Lower = more consistent.</p>
+
+                    <p><strong>3. Residual Standard Deviation</strong> - Volatility after removing trend</p>
+                    <div class="formula-box">
+                        Residual Std = Std Dev of (actual - trend line predicted values)
+                    </div>
+                    <p>Captures "noise" around the trend. A team can be improving (positive trend) but still have high residual std if they're erratic.</p>
+
                     <h3>Combined Metrics</h3>
-                    <p>To test whether consistency adds predictive power on top of raw performance, we created two combined metrics:</p>
+                    <p>To test whether consistency adds predictive power on top of raw performance:</p>
                     <div class="formula-box">
-                        Adjusted Rating = Net Rating / Rugosity
+                        Adjusted Rating = Net Rating / Consistency Metric
                     </div>
-                    <p>This rewards teams that are both good AND consistent. A team with +5 net rating and low rugosity (1.5) would score higher than a +5 team with high rugosity (3.0).</p>
+                    <p>Rewards teams that are both good AND consistent.</p>
                     <div class="formula-box">
-                        Weighted Rating = Net Rating - (Rugosity × 0.5)
+                        Weighted Rating = Net Rating - (Consistency × 0.5)
                     </div>
-                    <p>This penalizes inconsistency. A volatile team loses points for their high rugosity.</p>
+                    <p>Penalizes inconsistency directly.</p>
+
+                    <h3>Trend Metrics</h3>
+                    <p>Trend scores capture whether a team is improving or declining over the analysis window.</p>
+                    <div class="formula-box">
+                        Trend Score = Slope of linear regression of net rating over time
+                    </div>
+                    <p>We also calculate separate offensive and defensive trends to see if one side improving/declining matters more.</p>
+
+                    <h3>Archetypes</h3>
+                    <p>Each team is classified into one of 16 archetypes based on four binary dimensions relative to league medians:</p>
+                    <ul style="color: var(--text-secondary); margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li>Offensive rating above/below median</li>
+                        <li>Defensive rating above/below median</li>
+                        <li>Offensive consistency above/below median</li>
+                        <li>Defensive consistency above/below median</li>
+                    </ul>
+
+                    <h3>Badge Analysis</h3>
+                    <p>We track which teams would have earned each badge in historical seasons and analyze their playoff performance:</p>
+                    <ul style="color: var(--text-secondary); margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li><strong>Consistently Good/Bad:</strong> Most consistent among top/bottom 10 net rating</li>
+                        <li><strong>Best Offense/Defense:</strong> Highest offensive/defensive rating</li>
+                        <li><strong>On the Rise/Decline:</strong> Highest positive/negative trend</li>
+                    </ul>
 
                     <h3>Analysis Windows</h3>
                     <p>We calculate metrics using the last 10, 20, 30, 40 games of the regular season, plus the full season. This tests whether late-season performance is more predictive than full-season averages.</p>
@@ -690,7 +826,7 @@
                     <p>Playoff success is measured by total playoff wins (0-16). Teams that missed the playoffs receive 0 wins. This creates a continuous scale where the champion has 16 wins.</p>
 
                     <h3>Playoff Teams Only Analysis</h3>
-                    <p>We also analyze just the teams that made the playoffs to answer: among playoff teams, does consistency predict deeper runs? This isolates the effect of consistency for teams that have already qualified.</p>
+                    <p>We also analyze just playoff teams to answer: among playoff teams, does consistency predict deeper runs? This isolates the effect of consistency for teams that have already qualified.</p>
                 </div>
             </section>
         </div>
@@ -709,6 +845,8 @@
         let windowChart = null;
         let netRatingChart = null;
         let rugosityChart = null;
+        let badgeChart = null;
+        let archetypeChart = null;
 
         // Color scheme
         const COLORS = {
@@ -780,10 +918,13 @@
             renderScatterChart();
             renderWindowChart();
             renderComparisonCharts();
+            renderBadgeAnalysis();
+            renderArchetypeAnalysis();
 
             // Set up event listeners
             document.getElementById('windowSelector').addEventListener('change', updateScatterChart);
             document.getElementById('metricSelector').addEventListener('change', updateScatterChart);
+            document.getElementById('archetypeSortSelector').addEventListener('change', renderArchetypeAnalysis);
         }
 
         // Update hero meta
@@ -1009,13 +1150,32 @@
 
         function getMetricLabel(metric) {
             const labels = {
+                // Core metrics
                 'netRating': 'Net Rating (higher = better)',
-                'adjustedRating': 'Adjusted Rating (higher = better & consistent)',
-                'weightedRating': 'Weighted Rating (higher = better, penalizes inconsistency)',
-                'rugosity': 'Combined Rugosity (lower = more consistent)',
+                'offLevel': 'Offensive Rating (higher = better)',
+                'defLevel': 'Defensive Rating (lower = better)',
+                // Combined (Rugosity)
+                'adjustedRating': 'Adjusted Rating (Net / Rugosity)',
+                'weightedRating': 'Weighted Rating (Net - Rug×0.5)',
+                // Combined (Std Dev)
+                'adjustedByStd': 'Adjusted by Std (Net / StdDev)',
+                'weightedByStd': 'Weighted by Std (Net - Std×0.5)',
+                // Consistency - Rugosity
+                'rugosity': 'Combined Rugosity (lower = consistent)',
                 'offRugosity': 'Offensive Rugosity',
                 'defRugosity': 'Defensive Rugosity',
-                'trendScore': 'Trend Score (positive = improving)'
+                // Consistency - Std Dev
+                'stdDev': 'Combined Std Dev (lower = consistent)',
+                'offStdDev': 'Offensive Std Dev',
+                'defStdDev': 'Defensive Std Dev',
+                // Consistency - Residual
+                'residualStd': 'Combined Residual Std (lower = consistent)',
+                'offResidualStd': 'Offensive Residual Std',
+                'defResidualStd': 'Defensive Residual Std',
+                // Trends
+                'trendScore': 'Net Rating Trend (positive = improving)',
+                'offSlope': 'Offensive Trend (positive = improving)',
+                'defSlope': 'Defensive Trend (negative = improving)'
             };
             return labels[metric] || metric;
         }
@@ -1034,11 +1194,20 @@
             const adjustedCorrs = windows.map(w =>
                 correlations[w]?.adjustedRating_vs_playoffWins ? Math.abs(correlations[w].adjustedRating_vs_playoffWins.r) : 0
             );
-            const weightedCorrs = windows.map(w =>
-                correlations[w]?.weightedRating_vs_playoffWins ? Math.abs(correlations[w].weightedRating_vs_playoffWins.r) : 0
+            const adjustedByStdCorrs = windows.map(w =>
+                correlations[w]?.adjustedByStd_vs_playoffWins ? Math.abs(correlations[w].adjustedByStd_vs_playoffWins.r) : 0
             );
             const rugosityCorrs = windows.map(w =>
-                correlations[w] ? Math.abs(correlations[w].rugosity_vs_playoffWins.r) : 0
+                correlations[w]?.rugosity_vs_playoffWins ? Math.abs(correlations[w].rugosity_vs_playoffWins.r) : 0
+            );
+            const stdDevCorrs = windows.map(w =>
+                correlations[w]?.stdDev_vs_playoffWins ? Math.abs(correlations[w].stdDev_vs_playoffWins.r) : 0
+            );
+            const residualStdCorrs = windows.map(w =>
+                correlations[w]?.residualStd_vs_playoffWins ? Math.abs(correlations[w].residualStd_vs_playoffWins.r) : 0
+            );
+            const trendCorrs = windows.map(w =>
+                correlations[w]?.trendScore_vs_playoffWins ? Math.abs(correlations[w].trendScore_vs_playoffWins.r) : 0
             );
 
             if (windowChart) windowChart.destroy();
@@ -1049,31 +1218,52 @@
                     labels: windowLabels,
                     datasets: [
                         {
-                            label: 'Net Rating |r|',
+                            label: 'Net Rating',
                             data: netRatingCorrs,
                             backgroundColor: COLORS.blue + 'cc',
                             borderColor: COLORS.blue,
                             borderWidth: 1
                         },
                         {
-                            label: 'Adjusted (Net/Rug) |r|',
+                            label: 'Adj by Rugosity',
                             data: adjustedCorrs,
                             backgroundColor: COLORS.green + 'cc',
                             borderColor: COLORS.green,
                             borderWidth: 1
                         },
                         {
-                            label: 'Weighted (Net-Rug) |r|',
-                            data: weightedCorrs,
+                            label: 'Adj by Std Dev',
+                            data: adjustedByStdCorrs,
                             backgroundColor: COLORS.purple + 'cc',
                             borderColor: COLORS.purple,
                             borderWidth: 1
                         },
                         {
-                            label: 'Rugosity |r|',
+                            label: 'Rugosity',
                             data: rugosityCorrs,
-                            backgroundColor: COLORS.red + 'cc',
+                            backgroundColor: COLORS.red + '99',
                             borderColor: COLORS.red,
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Std Dev',
+                            data: stdDevCorrs,
+                            backgroundColor: '#ff9f43' + '99',
+                            borderColor: '#ff9f43',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Residual Std',
+                            data: residualStdCorrs,
+                            backgroundColor: '#00cec9' + '99',
+                            borderColor: '#00cec9',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Trend Score',
+                            data: trendCorrs,
+                            backgroundColor: COLORS.gold + '99',
+                            borderColor: COLORS.gold,
                             borderWidth: 1
                         }
                     ]
@@ -1084,7 +1274,10 @@
                     plugins: {
                         legend: {
                             position: 'top',
-                            labels: { color: COLORS.textSecondary }
+                            labels: {
+                                color: COLORS.textSecondary,
+                                font: { size: 10 }
+                            }
                         }
                     },
                     scales: {
@@ -1167,6 +1360,263 @@
                             title: { display: true, text: 'Playoff Wins', color: COLORS.textSecondary },
                             min: 0, max: 18,
                             grid: { color: COLORS.gridLines }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render badge analysis
+        function renderBadgeAnalysis() {
+            const badgeAnalysis = historicalData.badgeAnalysis;
+            if (!badgeAnalysis) {
+                document.getElementById('badgeSection').style.display = 'none';
+                return;
+            }
+
+            const ctx = document.getElementById('badgeChart').getContext('2d');
+
+            // Prepare data (Python outputs totalSeasons for badges, totalTeamSeasons for archetypes)
+            const badges = Object.keys(badgeAnalysis).filter(b => (badgeAnalysis[b].totalSeasons || badgeAnalysis[b].count || 0) > 0);
+            const avgWins = badges.map(b => badgeAnalysis[b].avgPlayoffWins);
+            const playoffRates = badges.map(b => badgeAnalysis[b].playoffRate * 100);
+
+            // Badge display names
+            const badgeLabels = {
+                'consistently_good': 'Consistently Good',
+                'consistently_bad': 'Consistently Bad',
+                'best_offense': 'Best Offense',
+                'best_defense': 'Best Defense',
+                'on_the_rise': 'On the Rise',
+                'on_the_decline': 'On the Decline'
+            };
+
+            // Badge colors
+            const badgeColors = {
+                'consistently_good': COLORS.green,
+                'consistently_bad': COLORS.red,
+                'best_offense': COLORS.gold,
+                'best_defense': COLORS.blue,
+                'on_the_rise': COLORS.purple,
+                'on_the_decline': '#ff9f43'
+            };
+
+            if (badgeChart) badgeChart.destroy();
+
+            badgeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: badges.map(b => badgeLabels[b] || b),
+                    datasets: [
+                        {
+                            label: 'Avg Playoff Wins',
+                            data: avgWins,
+                            backgroundColor: badges.map(b => (badgeColors[b] || COLORS.gold) + 'cc'),
+                            borderColor: badges.map(b => badgeColors[b] || COLORS.gold),
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Playoff Rate %',
+                            data: playoffRates,
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            borderColor: COLORS.textSecondary,
+                            borderWidth: 1,
+                            type: 'line',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { color: COLORS.textSecondary }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: COLORS.gridLines }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 16,
+                            title: {
+                                display: true,
+                                text: 'Avg Playoff Wins',
+                                color: COLORS.textSecondary
+                            },
+                            grid: { color: COLORS.gridLines }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            max: 100,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Playoff Rate %',
+                                color: COLORS.textSecondary
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Calculate overall league average
+            const allTeams = getAllTeamSeasons('full');
+            const leagueAvgWins = allTeams.reduce((sum, t) => sum + t.playoffWins, 0) / allTeams.length;
+
+            // Helper for badge count
+            const getBadgeCount = (b) => badgeAnalysis[b].totalSeasons || badgeAnalysis[b].count || 0;
+
+            document.getElementById('badgeStats').innerHTML = `
+                <div class="stat-pill">
+                    <span class="stat-label">League Avg Wins</span>
+                    <span class="stat-value">${leagueAvgWins.toFixed(1)}</span>
+                </div>
+                <div class="stat-pill">
+                    <span class="stat-label">Seasons Analyzed</span>
+                    <span class="stat-value">${Math.max(...badges.map(getBadgeCount))}</span>
+                </div>
+            `;
+
+            // Badge findings cards
+            const bestBadge = badges.reduce((best, b) =>
+                badgeAnalysis[b].avgPlayoffWins > badgeAnalysis[best].avgPlayoffWins ? b : best
+            );
+            const worstBadge = badges.reduce((worst, b) =>
+                badgeAnalysis[b].avgPlayoffWins < badgeAnalysis[worst].avgPlayoffWins ? b : worst
+            );
+
+            document.getElementById('badgeFindings').innerHTML = `
+                <div class="finding-card">
+                    <div class="finding-icon">🏆</div>
+                    <div class="finding-title">Best Performing Badge</div>
+                    <div class="finding-value positive">${badgeLabels[bestBadge]}</div>
+                    <div class="finding-desc">Teams with this badge average ${badgeAnalysis[bestBadge].avgPlayoffWins.toFixed(1)} playoff wins</div>
+                </div>
+                <div class="finding-card">
+                    <div class="finding-icon">📉</div>
+                    <div class="finding-title">Lowest Performing Badge</div>
+                    <div class="finding-value negative">${badgeLabels[worstBadge]}</div>
+                    <div class="finding-desc">Teams with this badge average ${badgeAnalysis[worstBadge].avgPlayoffWins.toFixed(1)} playoff wins</div>
+                </div>
+                <div class="finding-card">
+                    <div class="finding-icon">✅</div>
+                    <div class="finding-title">Best Playoff Rate</div>
+                    <div class="finding-value blue">${(Math.max(...playoffRates)).toFixed(0)}%</div>
+                    <div class="finding-desc">${badgeLabels[badges[playoffRates.indexOf(Math.max(...playoffRates))]]} badge winners make playoffs most often</div>
+                </div>
+            `;
+        }
+
+        // Render archetype analysis
+        function renderArchetypeAnalysis() {
+            const archetypeAnalysis = historicalData.archetypeAnalysis;
+            if (!archetypeAnalysis) {
+                document.getElementById('archetypeSection').style.display = 'none';
+                return;
+            }
+
+            const ctx = document.getElementById('archetypeChart').getContext('2d');
+            const sortBy = document.getElementById('archetypeSortSelector').value;
+
+            // Get archetypes with at least some teams (Python outputs totalTeamSeasons)
+            let archetypes = Object.keys(archetypeAnalysis).filter(a => {
+                const count = archetypeAnalysis[a].totalTeamSeasons || archetypeAnalysis[a].count || 0;
+                return count >= 3;
+            });
+
+            // Helper to get count (Python uses totalTeamSeasons)
+            const getCount = (a) => archetypeAnalysis[a].totalTeamSeasons || archetypeAnalysis[a].count || 0;
+
+            // Sort based on selection
+            if (sortBy === 'avgWins') {
+                archetypes.sort((a, b) => archetypeAnalysis[b].avgPlayoffWins - archetypeAnalysis[a].avgPlayoffWins);
+            } else if (sortBy === 'count') {
+                archetypes.sort((a, b) => getCount(b) - getCount(a));
+            } else if (sortBy === 'playoffRate') {
+                archetypes.sort((a, b) => archetypeAnalysis[b].playoffRate - archetypeAnalysis[a].playoffRate);
+            }
+
+            const avgWins = archetypes.map(a => archetypeAnalysis[a].avgPlayoffWins);
+            const counts = archetypes.map(a => getCount(a));
+            const playoffRates = archetypes.map(a => archetypeAnalysis[a].playoffRate * 100);
+
+            // Color based on archetype characteristics
+            const getArchetypeColor = (archetype) => {
+                const a = archetypeAnalysis[archetype];
+                if (!a) return COLORS.textMuted;
+                // Elite teams (high off + high def)
+                if (archetype.includes('Elite')) return COLORS.gold;
+                // Offensive focused
+                if (archetype.includes('Offensive') || archetype.includes('Juggernaut')) return COLORS.red;
+                // Defensive focused
+                if (archetype.includes('Defensive') || archetype.includes('Anchor')) return COLORS.blue;
+                // Balanced/Average
+                if (archetype.includes('Balanced') || archetype.includes('Average')) return COLORS.purple;
+                // Poor teams
+                if (archetype.includes('Poor') || archetype.includes('Struggling')) return COLORS.textMuted;
+                return COLORS.green;
+            };
+
+            if (archetypeChart) archetypeChart.destroy();
+
+            archetypeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: archetypes,
+                    datasets: [
+                        {
+                            label: 'Avg Playoff Wins',
+                            data: avgWins,
+                            backgroundColor: archetypes.map(a => getArchetypeColor(a) + 'cc'),
+                            borderColor: archetypes.map(a => getArchetypeColor(a)),
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: (ctx) => {
+                                    const archetype = archetypes[ctx.dataIndex];
+                                    const data = archetypeAnalysis[archetype];
+                                    const count = data.totalTeamSeasons || data.count || 0;
+                                    return [
+                                        `Teams: ${count}`,
+                                        `Playoff Rate: ${(data.playoffRate * 100).toFixed(0)}%`,
+                                        `Made Playoffs: ${data.madePlayoffs || 0}`,
+                                        `Avg Net Rating: ${data.avgNetRating || 'N/A'}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 16,
+                            title: {
+                                display: true,
+                                text: 'Avg Playoff Wins',
+                                color: COLORS.textSecondary
+                            },
+                            grid: { color: COLORS.gridLines }
+                        },
+                        y: {
+                            grid: { color: COLORS.gridLines },
+                            ticks: {
+                                font: { size: 10 }
+                            }
                         }
                     }
                 }

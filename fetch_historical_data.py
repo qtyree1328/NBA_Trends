@@ -80,33 +80,75 @@ def calculate_windowed_metrics(off_ratings, def_ratings, window):
     if len(off_slice) < 2:
         return None
 
+    # Rugosity (arc-to-chord ratio)
     off_rug = rugosity(off_slice)
     def_rug = rugosity(def_slice)
     combined_rug = off_rug + def_rug
 
+    # Level (mean rating)
     off_level = float(np.mean(off_slice))
     def_level = float(np.mean(def_slice))
     net_rating = off_level - def_level
 
-    # Trend score (slope of net rating)
+    # Standard deviation (alternative consistency metric)
+    off_std = float(np.std(off_slice))
+    def_std = float(np.std(def_slice))
+    combined_std = off_std + def_std
+
+    # Individual slopes (trends)
     x = list(range(len(off_slice)))
+    off_slope, _, off_resid_std, _ = linear_regression(x, off_slice)
+    def_slope, _, def_resid_std, _ = linear_regression(x, def_slice)
+
+    # Net rating trend
     net_series = [o - d for o, d in zip(off_slice, def_slice)]
-    slope, _, _, _ = linear_regression(x, net_series)
+    net_slope, _, net_resid_std, _ = linear_regression(x, net_series)
+
+    # Combined residual std (how far from trend line - alternative consistency)
+    combined_resid_std = off_resid_std + def_resid_std
 
     # Combined metrics
     adjusted_rating = net_rating / combined_rug if combined_rug > 0 else net_rating
     weighted_rating = net_rating - (combined_rug * 0.5)
 
+    # Std-based alternatives
+    adjusted_by_std = net_rating / combined_std if combined_std > 0 else net_rating
+    weighted_by_std = net_rating - (combined_std * 0.5)
+
     return {
+        # Core metrics
+        "netRating": round(net_rating, 2),
+        "offLevel": round(off_level, 2),
+        "defLevel": round(def_level, 2),
+
+        # Rugosity (consistency)
         "rugosity": round(combined_rug, 4),
         "offRugosity": round(off_rug, 4),
         "defRugosity": round(def_rug, 4),
-        "netRating": round(net_rating, 2),
-        "trendScore": round(slope, 4),
-        "offLevel": round(off_level, 2),
-        "defLevel": round(def_level, 2),
+
+        # Standard deviation (alternative consistency)
+        "stdDev": round(combined_std, 4),
+        "offStdDev": round(off_std, 4),
+        "defStdDev": round(def_std, 4),
+
+        # Residual std (how well trend fits)
+        "residualStd": round(combined_resid_std, 4),
+        "offResidualStd": round(off_resid_std, 4),
+        "defResidualStd": round(def_resid_std, 4),
+
+        # Trends/slopes
+        "trendScore": round(net_slope, 4),
+        "offSlope": round(off_slope, 4),
+        "defSlope": round(def_slope, 4),
+
+        # Combined metrics (rugosity-based)
         "adjustedRating": round(adjusted_rating, 4),
         "weightedRating": round(weighted_rating, 4),
+
+        # Combined metrics (std-based)
+        "adjustedByStd": round(adjusted_by_std, 4),
+        "weightedByStd": round(weighted_by_std, 4),
+
         "games": len(off_slice)
     }
 
@@ -204,84 +246,341 @@ def fetch_season_data(season, team_list):
     return teams_data
 
 # ----------------------------
+# Archetype Labels (from main page)
+# ----------------------------
+MATRIX_LABELS = {
+    "1111": "Elite Machine",
+    "1110": "Elite but Shaky D",
+    "1101": "Streaky Juggernaut",
+    "1100": "Talented Chaos",
+    "1011": "Offensive Powerhouse",
+    "1010": "Offensive but Shaky",
+    "1001": "Streaky Offense",
+    "1000": "Offensive Chaos",
+    "0111": "Defensive Fortress",
+    "0110": "Defense but Shaky",
+    "0101": "Streaky Defense",
+    "0100": "Defensive Chaos",
+    "0011": "Consistently Mediocre",
+    "0010": "Consistently Inconsistent",
+    "0001": "Struggling but Steady D",
+    "0000": "Full Rebuild Mode",
+}
+
+# ----------------------------
+# Calculate Archetypes and Badges for a Season
+# ----------------------------
+def calculate_archetypes_and_badges(teams_data, window_key="full"):
+    """Calculate archetypes based on league medians and identify badge winners."""
+    if not teams_data:
+        return {}, {}
+
+    # Extract metrics for calculating medians
+    metrics = []
+    for team in teams_data:
+        if window_key in team["windows"]:
+            w = team["windows"][window_key]
+            metrics.append({
+                "name": team["name"],
+                "offLevel": w["offLevel"],
+                "defLevel": w["defLevel"],
+                "offRugosity": w["offRugosity"],
+                "defRugosity": w["defRugosity"],
+                "rugosity": w["rugosity"],
+                "netRating": w["netRating"],
+                "trendScore": w["trendScore"],
+                "offSlope": w["offSlope"],
+                "defSlope": w["defSlope"],
+            })
+
+    if len(metrics) < 10:
+        return {}, {}
+
+    # Calculate league medians
+    off_level_median = np.median([m["offLevel"] for m in metrics])
+    def_level_median = np.median([m["defLevel"] for m in metrics])
+    off_rug_median = np.median([m["offRugosity"] for m in metrics])
+    def_rug_median = np.median([m["defRugosity"] for m in metrics])
+
+    # Assign archetypes to each team
+    archetypes = {}
+    for m in metrics:
+        off_high = 1 if m["offLevel"] >= off_level_median else 0
+        def_high = 1 if m["defLevel"] <= def_level_median else 0  # Lower is better
+        off_consistent = 1 if m["offRugosity"] <= off_rug_median else 0
+        def_consistent = 1 if m["defRugosity"] <= def_rug_median else 0
+
+        matrix_code = f"{off_high}{def_high}{off_consistent}{def_consistent}"
+        archetypes[m["name"]] = {
+            "code": matrix_code,
+            "label": MATRIX_LABELS.get(matrix_code, "Unclassified"),
+            "offHigh": bool(off_high),
+            "defHigh": bool(def_high),
+            "offConsistent": bool(off_consistent),
+            "defConsistent": bool(def_consistent),
+        }
+
+    # Calculate badge winners
+    badges = {}
+
+    # Sort by net rating for top/bottom 10
+    sorted_by_net = sorted(metrics, key=lambda t: t["netRating"], reverse=True)
+    top_10 = sorted_by_net[:10]
+    bottom_10 = sorted_by_net[-10:]
+
+    # Consistently Good: Most consistent among top 10 net rating
+    consistently_good = min(top_10, key=lambda t: t["rugosity"])
+    badges["consistently_good"] = consistently_good["name"]
+
+    # Consistently Bad: Most consistent among bottom 10 net rating
+    consistently_bad = min(bottom_10, key=lambda t: t["rugosity"])
+    badges["consistently_bad"] = consistently_bad["name"]
+
+    # Best Offense: Highest off rating adjusted for consistency
+    best_offense = max(metrics, key=lambda t: t["offLevel"] - (t["offRugosity"] * 0.5))
+    badges["best_offense"] = best_offense["name"]
+
+    # Best Defense: Lowest def rating adjusted for consistency
+    best_defense = min(metrics, key=lambda t: t["defLevel"] + (t["defRugosity"] * 0.5))
+    badges["best_defense"] = best_defense["name"]
+
+    # On the Rise: Highest trend score (offSlope - defSlope)
+    for m in metrics:
+        m["recentTrendScore"] = m["offSlope"] - m["defSlope"]
+    on_the_rise = max(metrics, key=lambda t: t["recentTrendScore"])
+    badges["on_the_rise"] = on_the_rise["name"]
+
+    # On the Decline: Lowest trend score
+    on_the_decline = min(metrics, key=lambda t: t["recentTrendScore"])
+    badges["on_the_decline"] = on_the_decline["name"]
+
+    return archetypes, badges
+
+# ----------------------------
 # Calculate Correlations
 # ----------------------------
 def calculate_correlations(all_seasons_data):
-    """Calculate correlations between metrics and playoff wins for each window."""
+    """Calculate correlations between ALL metrics and playoff wins for each window."""
     correlations = {}
 
     for window in WINDOWS:
         window_key = str(window)
-        rugosities = []
-        net_ratings = []
-        trend_scores = []
-        playoff_wins = []
 
-        # For playoff teams only analysis
-        playoff_rugosities = []
-        playoff_net_ratings = []
-        playoff_wins_only = []
+        # Collect all metrics
+        data = {
+            "netRating": [], "offLevel": [], "defLevel": [],
+            "rugosity": [], "offRugosity": [], "defRugosity": [],
+            "stdDev": [], "offStdDev": [], "defStdDev": [],
+            "residualStd": [], "offResidualStd": [], "defResidualStd": [],
+            "trendScore": [], "offSlope": [], "defSlope": [],
+            "adjustedRating": [], "weightedRating": [],
+            "adjustedByStd": [], "weightedByStd": [],
+            "playoffWins": [],
+            "archetype": [], "archetypeCode": [],
+        }
+
+        # Playoff teams only
+        playoff_data = {k: [] for k in data.keys()}
 
         for season_data in all_seasons_data:
             for team in season_data["teams"]:
-                if window_key in team["windows"]:
-                    rug = team["windows"][window_key]["rugosity"]
-                    net = team["windows"][window_key]["netRating"]
-                    trend = team["windows"][window_key]["trendScore"]
-                    wins = team["playoffWins"]
+                if window_key not in team["windows"]:
+                    continue
 
-                    rugosities.append(rug)
-                    net_ratings.append(net)
-                    trend_scores.append(trend)
-                    playoff_wins.append(wins)
+                w = team["windows"][window_key]
+                wins = team["playoffWins"]
 
-                    # Track playoff teams separately
-                    if wins > 0:
-                        playoff_rugosities.append(rug)
-                        playoff_net_ratings.append(net)
-                        playoff_wins_only.append(wins)
+                # Core metrics
+                data["netRating"].append(w["netRating"])
+                data["offLevel"].append(w["offLevel"])
+                data["defLevel"].append(w["defLevel"])
 
-        if len(rugosities) < 10:
+                # Consistency metrics
+                data["rugosity"].append(w["rugosity"])
+                data["offRugosity"].append(w["offRugosity"])
+                data["defRugosity"].append(w["defRugosity"])
+                data["stdDev"].append(w["stdDev"])
+                data["offStdDev"].append(w["offStdDev"])
+                data["defStdDev"].append(w["defStdDev"])
+                data["residualStd"].append(w["residualStd"])
+                data["offResidualStd"].append(w["offResidualStd"])
+                data["defResidualStd"].append(w["defResidualStd"])
+
+                # Trend metrics
+                data["trendScore"].append(w["trendScore"])
+                data["offSlope"].append(w["offSlope"])
+                data["defSlope"].append(w["defSlope"])
+
+                # Combined metrics
+                data["adjustedRating"].append(w["adjustedRating"])
+                data["weightedRating"].append(w["weightedRating"])
+                data["adjustedByStd"].append(w["adjustedByStd"])
+                data["weightedByStd"].append(w["weightedByStd"])
+
+                data["playoffWins"].append(wins)
+
+                # Archetype (if available)
+                if "archetype" in team:
+                    data["archetype"].append(team["archetype"]["label"])
+                    data["archetypeCode"].append(team["archetype"]["code"])
+
+                # Playoff teams only
+                if wins > 0:
+                    for key in data.keys():
+                        if key != "playoffWins" and len(data[key]) > 0:
+                            playoff_data[key].append(data[key][-1])
+                    playoff_data["playoffWins"].append(wins)
+
+        if len(data["netRating"]) < 10:
             continue
 
-        # Calculate basic correlations
-        rug_corr, rug_p = pearsonr(rugosities, playoff_wins)
-        net_corr, net_p = pearsonr(net_ratings, playoff_wins)
-        trend_corr, trend_p = pearsonr(trend_scores, playoff_wins)
+        # Helper to calculate correlation safely
+        def safe_corr(x, y):
+            if len(x) < 10 or len(set(x)) < 2:
+                return 0.0, 1.0
+            try:
+                r, p = pearsonr(x, y)
+                return round(r, 4), round(p, 6)
+            except:
+                return 0.0, 1.0
 
-        # Combined metric: netRating adjusted by consistency
-        # Higher net rating is better, lower rugosity is better
-        # adjustedRating = netRating / rugosity (consistency-adjusted performance)
-        adjusted_ratings = [net / rug if rug > 0 else net for net, rug in zip(net_ratings, rugosities)]
-        adj_corr, adj_p = pearsonr(adjusted_ratings, playoff_wins)
+        wins = data["playoffWins"]
+        playoff_wins = playoff_data["playoffWins"]
 
-        # Alternative: netRating - rugosity * weight (penalize inconsistency)
-        # Use rugosity as a penalty (scaled to be comparable to net rating)
-        weighted_ratings = [net - (rug * 0.5) for net, rug in zip(net_ratings, rugosities)]
-        weighted_corr, weighted_p = pearsonr(weighted_ratings, playoff_wins)
+        # Calculate all correlations
+        corr_results = {}
 
-        # Among playoff teams only: does consistency predict deeper runs?
-        playoff_rug_corr, playoff_rug_p = (0, 1)
-        playoff_net_corr, playoff_net_p = (0, 1)
-        if len(playoff_rugosities) >= 10:
-            playoff_rug_corr, playoff_rug_p = pearsonr(playoff_rugosities, playoff_wins_only)
-            playoff_net_corr, playoff_net_p = pearsonr(playoff_net_ratings, playoff_wins_only)
+        # Core metrics
+        for metric in ["netRating", "offLevel", "defLevel"]:
+            r, p = safe_corr(data[metric], wins)
+            corr_results[f"{metric}_vs_playoffWins"] = {"r": r, "p": p}
 
-        correlations[window_key] = {
-            "rugosity_vs_playoffWins": {"r": round(rug_corr, 4), "p": round(rug_p, 6)},
-            "netRating_vs_playoffWins": {"r": round(net_corr, 4), "p": round(net_p, 6)},
-            "trendScore_vs_playoffWins": {"r": round(trend_corr, 4), "p": round(trend_p, 6)},
-            "adjustedRating_vs_playoffWins": {"r": round(adj_corr, 4), "p": round(adj_p, 6)},
-            "weightedRating_vs_playoffWins": {"r": round(weighted_corr, 4), "p": round(weighted_p, 6)},
-            "playoffTeamsOnly": {
-                "rugosity_vs_wins": {"r": round(playoff_rug_corr, 4), "p": round(playoff_rug_p, 6)},
-                "netRating_vs_wins": {"r": round(playoff_net_corr, 4), "p": round(playoff_net_p, 6)},
-                "sampleSize": len(playoff_rugosities)
-            },
-            "sampleSize": len(rugosities)
-        }
+        # Consistency metrics (rugosity, std, residual)
+        for metric in ["rugosity", "offRugosity", "defRugosity",
+                       "stdDev", "offStdDev", "defStdDev",
+                       "residualStd", "offResidualStd", "defResidualStd"]:
+            r, p = safe_corr(data[metric], wins)
+            corr_results[f"{metric}_vs_playoffWins"] = {"r": r, "p": p}
+
+        # Trend metrics
+        for metric in ["trendScore", "offSlope", "defSlope"]:
+            r, p = safe_corr(data[metric], wins)
+            corr_results[f"{metric}_vs_playoffWins"] = {"r": r, "p": p}
+
+        # Combined metrics
+        for metric in ["adjustedRating", "weightedRating", "adjustedByStd", "weightedByStd"]:
+            r, p = safe_corr(data[metric], wins)
+            corr_results[f"{metric}_vs_playoffWins"] = {"r": r, "p": p}
+
+        # Playoff teams only
+        playoff_results = {}
+        if len(playoff_wins) >= 10:
+            for metric in ["netRating", "rugosity", "stdDev", "residualStd", "trendScore",
+                           "offLevel", "defLevel", "offRugosity", "defRugosity"]:
+                r, p = safe_corr(playoff_data[metric], playoff_wins)
+                playoff_results[f"{metric}_vs_wins"] = {"r": r, "p": p}
+            playoff_results["sampleSize"] = len(playoff_wins)
+        else:
+            playoff_results["sampleSize"] = len(playoff_wins)
+
+        corr_results["playoffTeamsOnly"] = playoff_results
+        corr_results["sampleSize"] = len(wins)
+
+        correlations[window_key] = corr_results
 
     return correlations
+
+
+# ----------------------------
+# Analyze Badge Winners
+# ----------------------------
+def analyze_badge_performance(all_seasons_data):
+    """Analyze how badge winners performed in playoffs."""
+    badge_stats = {
+        "consistently_good": {"wins": [], "made_playoffs": 0, "total": 0},
+        "consistently_bad": {"wins": [], "made_playoffs": 0, "total": 0},
+        "best_offense": {"wins": [], "made_playoffs": 0, "total": 0},
+        "best_defense": {"wins": [], "made_playoffs": 0, "total": 0},
+        "on_the_rise": {"wins": [], "made_playoffs": 0, "total": 0},
+        "on_the_decline": {"wins": [], "made_playoffs": 0, "total": 0},
+    }
+
+    for season_data in all_seasons_data:
+        badges = season_data.get("badges", {})
+        teams_by_name = {t["name"]: t for t in season_data["teams"]}
+
+        for badge_name, team_name in badges.items():
+            if badge_name in badge_stats and team_name in teams_by_name:
+                team = teams_by_name[team_name]
+                wins = team["playoffWins"]
+                badge_stats[badge_name]["wins"].append(wins)
+                badge_stats[badge_name]["total"] += 1
+                if wins > 0:
+                    badge_stats[badge_name]["made_playoffs"] += 1
+
+    # Calculate summary stats
+    results = {}
+    for badge, stats in badge_stats.items():
+        if stats["total"] > 0:
+            results[badge] = {
+                "avgPlayoffWins": round(np.mean(stats["wins"]), 2) if stats["wins"] else 0,
+                "playoffRate": round(stats["made_playoffs"] / stats["total"], 3),
+                "totalSeasons": stats["total"],
+                "madePlayoffs": stats["made_playoffs"],
+            }
+
+    return results
+
+
+# ----------------------------
+# Analyze Archetypes
+# ----------------------------
+def analyze_archetype_performance(all_seasons_data):
+    """Analyze how each archetype performed in playoffs."""
+    archetype_stats = {}
+
+    for season_data in all_seasons_data:
+        for team in season_data["teams"]:
+            if "archetype" not in team:
+                continue
+
+            label = team["archetype"]["label"]
+            code = team["archetype"]["code"]
+            wins = team["playoffWins"]
+
+            if label not in archetype_stats:
+                archetype_stats[label] = {
+                    "code": code,
+                    "wins": [],
+                    "made_playoffs": 0,
+                    "total": 0,
+                    "net_ratings": []
+                }
+
+            archetype_stats[label]["wins"].append(wins)
+            archetype_stats[label]["total"] += 1
+            if wins > 0:
+                archetype_stats[label]["made_playoffs"] += 1
+            if "full" in team["windows"]:
+                archetype_stats[label]["net_ratings"].append(team["windows"]["full"]["netRating"])
+
+    # Calculate summary stats
+    results = {}
+    for archetype, stats in archetype_stats.items():
+        if stats["total"] >= 5:  # Need at least 5 samples
+            results[archetype] = {
+                "code": stats["code"],
+                "avgPlayoffWins": round(np.mean(stats["wins"]), 2),
+                "playoffRate": round(stats["made_playoffs"] / stats["total"], 3),
+                "totalTeamSeasons": stats["total"],
+                "madePlayoffs": stats["made_playoffs"],
+                "avgNetRating": round(np.mean(stats["net_ratings"]), 2) if stats["net_ratings"] else 0,
+            }
+
+    # Sort by avg playoff wins
+    results = dict(sorted(results.items(), key=lambda x: x[1]["avgPlayoffWins"], reverse=True))
+
+    return results
 
 # ----------------------------
 # Main
@@ -309,6 +608,14 @@ def main():
             team["playoffWins"] = playoff_results.get(team["name"], 0)
             team["madePlayoffs"] = bool(team["playoffWins"] > 0)
 
+        # Calculate archetypes and badges
+        archetypes, badges = calculate_archetypes_and_badges(teams_data, window_key="full")
+
+        # Assign archetypes to teams
+        for team in teams_data:
+            if team["name"] in archetypes:
+                team["archetype"] = archetypes[team["name"]]
+
         # Find champion (team with most wins, should be 16)
         champion = max(teams_data, key=lambda t: t["playoffWins"], default=None)
         if champion:
@@ -316,7 +623,8 @@ def main():
 
         all_seasons_data.append({
             "season": season,
-            "teams": teams_data
+            "teams": teams_data,
+            "badges": badges
         })
 
     # Calculate correlations
@@ -344,10 +652,28 @@ def main():
     print("-" * 50)
     for window in WINDOWS:
         w = str(window)
-        if w in correlations:
+        if w in correlations and "rugosity_vs_wins" in correlations[w].get("playoffTeamsOnly", {}):
             c = correlations[w]["playoffTeamsOnly"]
             print(f"  {window:>8}: Rugosity r={c['rugosity_vs_wins']['r']:+.3f}, "
                   f"NetRating r={c['netRating_vs_wins']['r']:+.3f} (n={c['sampleSize']})")
+
+    # Analyze badge winners
+    print("\n" + "=" * 40)
+    print("Badge Winner Performance:")
+    print("-" * 50)
+    badge_analysis = analyze_badge_performance(all_seasons_data)
+    for badge, stats in badge_analysis.items():
+        print(f"  {badge:20}: Avg {stats['avgPlayoffWins']:.1f} wins, "
+              f"{stats['playoffRate']*100:.0f}% made playoffs ({stats['madePlayoffs']}/{stats['totalSeasons']})")
+
+    # Analyze archetypes
+    print("\n" + "=" * 40)
+    print("Archetype Performance (sorted by avg playoff wins):")
+    print("-" * 60)
+    archetype_analysis = analyze_archetype_performance(all_seasons_data)
+    for archetype, stats in list(archetype_analysis.items())[:8]:  # Top 8
+        print(f"  {archetype:25}: Avg {stats['avgPlayoffWins']:.1f} wins, "
+              f"{stats['playoffRate']*100:.0f}% playoffs (n={stats['totalTeamSeasons']})")
 
     # Find best window
     best_window = max(correlations.keys(),
@@ -373,6 +699,8 @@ def main():
         "windows": [str(w) for w in WINDOWS],
         "seasons": all_seasons_data,
         "correlations": correlations,
+        "badgeAnalysis": badge_analysis,
+        "archetypeAnalysis": archetype_analysis,
         "summary": {
             "totalTeamSeasons": total_team_seasons,
             "playoffTeams": playoff_teams_total,
