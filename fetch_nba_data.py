@@ -1,4 +1,5 @@
 import json
+import os
 import time
 import numpy as np
 import pandas as pd
@@ -10,9 +11,14 @@ from tqdm.auto import tqdm
 # PARAMETERS
 # ----------------------------
 SEASON = "2025-26"
-WINDOW = 7
+WINDOW = int(os.getenv("WINDOW", "5"))
 SEASON_TYPE = "Regular Season"
-SLEEP_BETWEEN_CALLS_SEC = 0.65
+SLEEP_BETWEEN_CALLS_SEC = float(os.getenv("SLEEP_BETWEEN_CALLS_SEC", "1.25"))
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", "5"))
+TIMEOUT = int(os.getenv("NBA_API_TIMEOUT", "180"))
+BACKOFF_BASE_SEC = float(os.getenv("BACKOFF_BASE_SEC", "4"))
+MIN_TEAMS_REQUIRED = int(os.getenv("MIN_TEAMS_REQUIRED", "25"))
+MAX_FAILED_TEAMS_BEFORE_ABORT = int(os.getenv("MAX_FAILED_TEAMS_BEFORE_ABORT", "4"))
 
 OUTPUT_FILE = f"nba_trends_data_window{WINDOW}.json"
 
@@ -83,6 +89,7 @@ print(f"Fetching NBA data for {SEASON} season...\n")
 
 team_list = nba_teams.get_teams()
 teams_data = []
+failed_teams = []
 
 pbar = tqdm(team_list, desc="Fetching teams", unit="team")
 
@@ -92,14 +99,29 @@ for t in pbar:
     pbar.set_postfix(team=team_name)
 
     try:
-        resp = TeamGameLogs(
-            league_id_nullable="00",
-            team_id_nullable=str(team_id),
-            season_nullable=SEASON,
-            season_type_nullable=SEASON_TYPE,
-            measure_type_player_game_logs_nullable="Advanced",
-        )
-        df = resp.get_data_frames()[0].copy()
+        df = None
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                resp = TeamGameLogs(
+                    league_id_nullable="00",
+                    team_id_nullable=str(team_id),
+                    season_nullable=SEASON,
+                    season_type_nullable=SEASON_TYPE,
+                    measure_type_player_game_logs_nullable="Advanced",
+                    timeout=TIMEOUT,
+                )
+                df = resp.get_data_frames()[0].copy()
+                break
+            except Exception as retry_err:
+                if attempt < MAX_RETRIES:
+                    wait = BACKOFF_BASE_SEC * attempt
+                    pbar.write(
+                        f"[RETRY] {team_name}: attempt {attempt}/{MAX_RETRIES}, "
+                        f"waiting {wait}s ({type(retry_err).__name__})..."
+                    )
+                    time.sleep(wait)
+                else:
+                    raise retry_err
         
         if df.empty:
             pbar.write(f"[SKIP] {team_name}: no games")
@@ -172,7 +194,13 @@ for t in pbar:
         })
 
     except Exception as e:
-        pbar.write(f"[ERROR] {team_name}: {e}")
+        pbar.write(f"[ERROR] {team_name}: {type(e).__name__}: {e}")
+        failed_teams.append(team_name)
+        if not teams_data and len(failed_teams) >= MAX_FAILED_TEAMS_BEFORE_ABORT:
+            raise SystemExit(
+                "Aborting early: multiple teams failed before any successful fetch. "
+                "This usually indicates network throttling, VPN/proxy issues, or NBA API blockage."
+            )
 
     time.sleep(SLEEP_BETWEEN_CALLS_SEC)
 
@@ -180,6 +208,16 @@ for t in pbar:
 # Compute z-scores and metrics
 # ----------------------------
 print(f"\nProcessed {len(teams_data)} teams. Computing metrics...")
+
+if failed_teams:
+    print(f"Failed teams: {len(failed_teams)}")
+
+if len(teams_data) < MIN_TEAMS_REQUIRED:
+    sample_failed = ", ".join(failed_teams[:8]) if failed_teams else "n/a"
+    raise SystemExit(
+        f"Only processed {len(teams_data)} teams; expected at least {MIN_TEAMS_REQUIRED}. "
+        f"Sample failed teams: {sample_failed}"
+    )
 
 # Initialize league medians for output
 league_medians = {}
