@@ -21,7 +21,8 @@ MIN_TEAMS_REQUIRED = int(os.getenv("MIN_TEAMS_REQUIRED", "25"))
 MAX_FAILED_TEAMS_BEFORE_ABORT = int(os.getenv("MAX_FAILED_TEAMS_BEFORE_ABORT", "4"))
 
 # Post All-Star cutoff: only include games on or after this date
-CUTOFF_DATE = pd.Timestamp(f"{SEASON[:4]}-02-01")
+# Season "2025-26" -> second year is 2026
+CUTOFF_DATE = pd.Timestamp(f"20{SEASON[5:7]}-02-01")
 
 OUTPUT_FILE = f"post_allstar_data_window{WINDOW}.json"
 

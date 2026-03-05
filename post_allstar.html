@@ -1210,26 +1210,20 @@
             color: #f3f4f6;
         }
 
-        /* Data page nav button */
-        .main-nav-item.nav-data {
+        /* Page nav links */
+        .main-nav-item.nav-page {
             background: transparent;
             border-color: var(--text-muted);
         }
-        .main-nav-item.nav-data:hover {
-            border-color: var(--accent-gold);
-            color: var(--accent-gold);
+        .main-nav-item.nav-page:hover {
+            border-color: var(--accent-gold-dim);
+            color: var(--text-primary);
             background: rgba(212, 168, 83, 0.1);
         }
-
-        /* Historical page nav link */
-        .main-nav-item.nav-historical {
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.1));
-            border-color: rgba(168, 85, 247, 0.4);
-            color: #a855f7;
-        }
-        .main-nav-item.nav-historical:hover {
-            border-color: #a855f7;
-            background: rgba(168, 85, 247, 0.2);
+        .main-nav-item.nav-page.active {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            background: rgba(212, 168, 83, 0.15);
         }
 
         /* Data page rankings */
@@ -2519,11 +2513,11 @@
             </div>
         </div>
         <div class="main-nav-right">
-            <a href="index.html" class="main-nav-item">Full Season</a>
-            <a href="post_allstar.html" class="main-nav-item active nav-historical">Post All-Star</a>
-            <a href="historical.html" class="main-nav-item nav-historical">Historical</a>
-            <button class="main-nav-item nav-data" onclick="openDataPage()">Data</button>
-            <button class="main-nav-item nav-methods" onclick="openMethodsPage()">Methods</button>
+            <a href="index.html" class="main-nav-item nav-page">Full Season</a>
+            <a href="post_allstar.html" class="main-nav-item nav-page active">Post All-Star</a>
+            <a href="historical.html" class="main-nav-item nav-page">Historical</a>
+            <a href="data.html" class="main-nav-item nav-page">Data</a>
+            <a href="methods.html" class="main-nav-item nav-page">Methods</a>
         </div>
     </nav>
 
@@ -3241,16 +3235,21 @@
 
         // Track when the page started loading
         const pageLoadStart = Date.now();
-        const MIN_LOADING_TIME = 2000; // Minimum 2 seconds loading screen
+        const MIN_LOADING_TIME = 2000;
+        const hasVisited = sessionStorage.getItem('nba_trends_visited');
 
         function hideLoading() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (hasVisited) {
+                loadingScreen.classList.add('hidden');
+                return;
+            }
+            sessionStorage.setItem('nba_trends_visited', '1');
             const elapsed = Date.now() - pageLoadStart;
             const remaining = Math.max(0, MIN_LOADING_TIME - elapsed);
 
             setTimeout(() => {
-                const loadingScreen = document.getElementById('loadingScreen');
                 loadingScreen.classList.add('fade-out');
-                // Remove from DOM after fade completes
                 setTimeout(() => {
                     loadingScreen.classList.add('hidden');
                 }, 500);

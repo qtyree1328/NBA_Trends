@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Trends — Methodology</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0c10;
+            --bg-card: #12151c;
+            --bg-elevated: #1a1e28;
+            --accent-gold: #d4a853;
+            --accent-gold-dim: #8a6f3a;
+            --accent-blue: #4a9eff;
+            --text-primary: #f0f0f0;
+            --text-secondary: #8a8f9d;
+            --text-muted: #5a5f6d;
+            --border-subtle: rgba(255,255,255,0.06);
+        }
+
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            font-family: 'Source Sans 3', sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Nav */
+        .main-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0.5rem 1rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .main-nav-brand {
+            font-family: 'Action NBA', 'Impact', 'Arial Black', sans-serif;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-weight: 700;
+            white-space: nowrap;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            background: linear-gradient(180deg, #ffffff 0%, #c0c0c0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .main-nav-divider {
+            width: 1px;
+            height: 24px;
+            background: var(--border-subtle);
+            flex-shrink: 0;
+        }
+        .main-nav-right {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .main-nav-item {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 0.4rem 0.75rem;
+            color: var(--text-secondary);
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .main-nav-item:hover {
+            border-color: var(--accent-gold-dim);
+            color: var(--text-primary);
+            background: rgba(212, 168, 83, 0.1);
+        }
+        .main-nav-item.nav-page {
+            background: transparent;
+            border-color: var(--text-muted);
+        }
+        .main-nav-item.nav-page:hover {
+            border-color: var(--accent-gold-dim);
+            color: var(--text-primary);
+            background: rgba(212, 168, 83, 0.1);
+        }
+        .main-nav-item.nav-page.active {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            background: rgba(212, 168, 83, 0.15);
+        }
+
+        /* Content */
+        .page-wrapper {
+            padding-top: 70px;
+            padding-bottom: 3rem;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .methods-content {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .methods-subsection {
+            margin-bottom: 2rem;
+        }
+        .methods-subsection:last-child {
+            margin-bottom: 0;
+        }
+        .methods-subtitle {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+            margin-bottom: 0.75rem;
+        }
+        .methods-text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+        .methods-formula {
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent-blue);
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        .methods-formula-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+        .methods-list {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+        }
+        .methods-list li {
+            margin-bottom: 0.5rem;
+        }
+        .methods-list code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-elevated);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--accent-gold);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-nav {
+                flex-wrap: wrap;
+                padding: 0.4rem 0.6rem;
+                gap: 0.3rem;
+            }
+            .main-nav-divider {
+                display: none;
+            }
+            .main-nav-right {
+                flex-wrap: wrap;
+                gap: 0.3rem;
+            }
+            .main-nav-item {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.5rem;
+            }
+            .page-wrapper {
+                padding-top: 100px;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .page-title {
+                font-size: 1.6rem;
+            }
+            .methods-formula {
+                font-size: 0.8rem;
+                padding: 0.75rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <span class="main-nav-brand">NBA Trends</span>
+        <div class="main-nav-divider"></div>
+        <div style="flex: 1;"></div>
+        <div class="main-nav-right">
+            <a href="index.html" class="main-nav-item nav-page">Full Season</a>
+            <a href="post_allstar.html" class="main-nav-item nav-page">Post All-Star</a>
+            <a href="historical.html" class="main-nav-item nav-page">Historical</a>
+            <a href="data.html" class="main-nav-item nav-page">Data</a>
+            <a href="methods.html" class="main-nav-item nav-page active">Methods</a>
+        </div>
+    </nav>
+
+    <div class="page-wrapper">
+        <h1 class="page-title">Methodology</h1>
+
+        <div class="methods-content">
+
+            <div class="methods-subsection">
+                <h2 class="methods-subtitle">Data Source &amp; Smoothing</h2>
+                <p class="methods-text">
+                    Game-by-game offensive and defensive ratings are sourced from NBA.com via the <code>nba_api</code> library. Raw ratings are smoothed using a 5-game rolling average to reveal underlying trends while filtering out single-game noise.
+                </p>
+            </div>
+
+            <div class="methods-subsection">
+                <h2 class="methods-subtitle">Consistency (Rugosity)</h2>
+                <p class="methods-text">
+                    Consistency is measured using rugosity&mdash;a metric borrowed from ecology and geography that quantifies how "jagged" or volatile a time series is. Rugosity is calculated as the arc-to-chord ratio: the total path length of the rating curve divided by the straight-line distance from start to end.
+                </p>
+                <div class="methods-formula">
+                    <span class="methods-formula-label">Rugosity Formula</span>
+                    Rugosity = Path Length / Chord Length
+                </div>
+                <div class="methods-formula">
+                    <span class="methods-formula-label">Path Length</span>
+                    &Sigma; &radic;[(x<sub>i+1</sub> - x<sub>i</sub>)&sup2; + (y<sub>i+1</sub> - y<sub>i</sub>)&sup2;] &nbsp; for i = 1 to n-1
+                </div>
+                <div class="methods-formula">
+                    <span class="methods-formula-label">Chord Length</span>
+                    &radic;[(x<sub>n</sub> - x<sub>1</sub>)&sup2; + (y<sub>n</sub> - y<sub>1</sub>)&sup2;]
+                </div>
+                <p class="methods-text" style="margin-top: 1rem;">Interpretation:</p>
+                <ul class="methods-list">
+                    <li><code>Rugosity = 1.0</code> &mdash; Perfectly straight line (maximum consistency)</li>
+                    <li><code>Rugosity &lt; 1.15</code> &mdash; Highly consistent performance</li>
+                    <li><code>Rugosity 1.15 - 1.35</code> &mdash; Moderate variation</li>
+                    <li><code>Rugosity &gt; 1.35</code> &mdash; Volatile, unpredictable performance</li>
+                </ul>
+            </div>
+
+            <div class="methods-subsection">
+                <h2 class="methods-subtitle">Tier Classification</h2>
+                <p class="methods-text">
+                    Teams are grouped into tiers based on net rating (offensive rating minus defensive rating). Thresholds:
+                </p>
+                <ul class="methods-list">
+                    <li><code>Contenders</code> &mdash; Net Rating &gt; +6.0</li>
+                    <li><code>Legit Threats</code> &mdash; Net Rating &gt; +3.5</li>
+                    <li><code>Dangerous</code> &mdash; Net Rating &gt; +1.5</li>
+                    <li><code>Play-In</code> &mdash; Net Rating &gt; -1.5</li>
+                    <li><code>Up-and-Coming</code> &mdash; Net Rating &gt; -4.0</li>
+                    <li><code>Rebuild</code> &mdash; Net Rating &gt; -7.0</li>
+                    <li><code>Tank</code> &mdash; Net Rating &le; -7.0</li>
+                </ul>
+            </div>
+
+            <div class="methods-subsection">
+                <h2 class="methods-subtitle">4D Matrix Classification</h2>
+                <p class="methods-text">
+                    Teams are classified using a 4-dimensional matrix based on their position relative to league medians:
+                </p>
+                <ul class="methods-list">
+                    <li><strong>Offense Rating:</strong> Above or below league median</li>
+                    <li><strong>Defense Rating:</strong> Above or below league median (lower is better)</li>
+                    <li><strong>Offensive Consistency:</strong> Rugosity above or below median</li>
+                    <li><strong>Defensive Consistency:</strong> Rugosity above or below median</li>
+                </ul>
+                <p class="methods-text">
+                    This creates 16 possible matrix positions (2<sup>4</sup>), each with a unique label.
+                </p>
+            </div>
+
+            <div class="methods-subsection">
+                <h2 class="methods-subtitle">Trend Modifiers</h2>
+                <p class="methods-text">
+                    Team labels can be modified based on significant trends:
+                </p>
+                <ul class="methods-list">
+                    <li>Significant trends (&gt;1&sigma;) add modifiers like <code>(&uarr;O)</code> or <code>(&darr;D)</code></li>
+                    <li>Overwhelming trends (&gt;1.5&sigma;) override the matrix label entirely</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

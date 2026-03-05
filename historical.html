@@ -121,6 +121,27 @@
             background: rgba(212, 168, 83, 0.15);
         }
 
+        .main-nav-right {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .main-nav-item.nav-page {
+            background: transparent;
+            border-color: var(--text-muted);
+        }
+        .main-nav-item.nav-page:hover {
+            border-color: var(--accent-gold-dim);
+            color: var(--text-primary);
+            background: rgba(212, 168, 83, 0.1);
+        }
+        .main-nav-item.nav-page.active {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            background: rgba(212, 168, 83, 0.15);
+        }
+
         /* Hero */
         .hero {
             background: var(--gradient-hero);
@@ -513,11 +534,16 @@
 <body>
     <!-- Navigation -->
     <nav class="main-nav">
-        <span class="main-nav-brand">NBA TRENDS</span>
+        <span class="main-nav-brand">NBA Trends</span>
         <div class="main-nav-divider"></div>
-        <a href="index.html" class="main-nav-item">Current Season</a>
-        <a href="post_allstar.html" class="main-nav-item">Post All-Star</a>
-        <a href="historical.html" class="main-nav-item active">Historical Analysis</a>
+        <div style="flex: 1;"></div>
+        <div class="main-nav-right">
+            <a href="index.html" class="main-nav-item nav-page">Full Season</a>
+            <a href="post_allstar.html" class="main-nav-item nav-page">Post All-Star</a>
+            <a href="historical.html" class="main-nav-item nav-page active">Historical</a>
+            <a href="data.html" class="main-nav-item nav-page">Data</a>
+            <a href="methods.html" class="main-nav-item nav-page">Methods</a>
+        </div>
     </nav>
 
     <!-- Hero -->
