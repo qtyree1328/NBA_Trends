@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBA Trends | Offensive & Defensive Team Trends</title>
+    <title>NBA Trends | Post All-Star Performance</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23d4a853'/%3E%3Cline x1='2' y1='16' x2='30' y2='16' stroke='%230a0c10' stroke-width='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='30' stroke='%230a0c10' stroke-width='2'/%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Source+Sans+3:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2474,7 +2474,7 @@
 <body>
     <!-- Loading Screen -->
     <div class="loading-screen" id="loadingScreen">
-        <div class="loading-logo">RHYTHM REPORT</div>
+        <div class="loading-logo">POST ALL-STAR REPORT</div>
         <div class="loading-court">
             <div class="court-outline"></div>
             <div class="court-center"></div>
@@ -2519,7 +2519,8 @@
             </div>
         </div>
         <div class="main-nav-right">
-            <a href="post_allstar.html" class="main-nav-item nav-historical">Post All-Star</a>
+            <a href="index.html" class="main-nav-item">Full Season</a>
+            <a href="post_allstar.html" class="main-nav-item active nav-historical">Post All-Star</a>
             <a href="historical.html" class="main-nav-item nav-historical">Historical</a>
             <button class="main-nav-item nav-data" onclick="openDataPage()">Data</button>
             <button class="main-nav-item nav-methods" onclick="openMethodsPage()">Methods</button>
@@ -2829,8 +2830,8 @@
             YMIN: 95,
             YMAX: 135,
             TOPK: 3,
-            DATA_FILE: 'nba_trends_data_window5.json',
-            DATA_FILE_SMOOTH: 'nba_trends_data_window7.json'
+            DATA_FILE: 'post_allstar_data_window5.json',
+            DATA_FILE_SMOOTH: 'post_allstar_data_window7.json'
         };
 
         // Global data storage
@@ -3824,14 +3825,14 @@
                     scales: {
                         x: {
                             min: 1,
-                            max: 82,
+                            max: Math.max(teamData.games || 40, 40),
                             grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false },
                             ticks: { 
                                 color: '#5a5f6d', 
                                 font: { family: "'JetBrains Mono', monospace", size: 10 },
                                 stepSize: 10
                             },
-                            title: { display: true, text: 'Game Number', color: '#5a5f6d' }
+                            title: { display: true, text: 'Post All-Star Game #', color: '#5a5f6d' }
                         },
                         y: {
                             min: CONFIG.YMIN,
@@ -3899,11 +3900,11 @@
             // Add tier description header
             html += `
                 <div class="tier-intro">
-                    <h2 class="tier-intro-title">Team Tiers by Net Rating</h2>
+                    <h2 class="tier-intro-title">Post All-Star Tiers by Net Rating</h2>
                     <p class="tier-intro-description">
-                        Teams are grouped into competitive tiers based on their net rating (offensive rating minus defensive rating). 
-                        This metric captures overall team quality—positive values indicate outscoring opponents, while negative values indicate being outscored.
-                        Within each tier, teams are labeled dynamically based on their 4D matrix position and trend significance.
+                        Teams are ranked based on performance since February 1 — after trades, buyouts, and the All-Star break.
+                        This gives a clearer picture of how teams stack up heading into the playoffs.
+                        All ratings, trends, and classifications are computed exclusively from post All-Star break games.
                     </p>
                 </div>
             `;
@@ -4154,9 +4155,9 @@
                     globalTeamsDataSmooth = smoothData.teams;
                 }
 
-                document.getElementById('seasonLabel').textContent = `${data.season} Season`;
-                document.getElementById('gamesLabel').textContent = `${data.teams.reduce((sum, t) => sum + t.games, 0)} games analyzed`;
-                document.getElementById('dateLabel').textContent = `Data from ${new Date(data.generated).toLocaleDateString()}`;
+                document.getElementById('seasonLabel').textContent = `${data.season} Post All-Star`;
+                document.getElementById('gamesLabel').textContent = `${data.teams.reduce((sum, t) => sum + t.games, 0)} post-ASB games analyzed`;
+                document.getElementById('dateLabel').textContent = `Games from Feb 1+ | Data from ${new Date(data.generated).toLocaleDateString()}`;
 
                 // Store global data and populate team selector
                 globalTeamsData = data.teams;
@@ -4168,7 +4169,7 @@
             } catch (error) {
                 showError(`
                     Could not load <code>${CONFIG.DATA_FILE}</code><br><br>
-                    Make sure you've run <code>python fetch_nba_data.py</code> first,<br>
+                    Make sure you've run <code>python fetch_post_allstar_data.py</code> first,<br>
                     and that the JSON file is in the same folder as this HTML file.
                 `);
             }

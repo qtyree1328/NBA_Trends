@@ -71,6 +71,25 @@ run_window 5
 echo ""
 run_window 7
 
+run_post_allstar() {
+    local window="$1"
+    local outfile="post_allstar_data_window${window}.json"
+    echo "=== Running post All-Star with WINDOW=${window} ==="
+    WINDOW="${window}" \
+    MAX_RETRIES="${MAX_RETRIES}" \
+    NBA_API_TIMEOUT="${NBA_API_TIMEOUT}" \
+    SLEEP_BETWEEN_CALLS_SEC="${SLEEP_BETWEEN_CALLS_SEC}" \
+    MIN_TEAMS_REQUIRED="${MIN_TEAMS_REQUIRED}" \
+    python fetch_post_allstar_data.py
+    validate_output "${outfile}" "${MIN_TEAMS_REQUIRED}"
+}
+
+echo ""
+run_post_allstar 5
+
+echo ""
+run_post_allstar 7
+
 echo ""
 echo "=== Committing and pushing ==="
 git add .
