@@ -14,7 +14,7 @@ SEASONS = [
     "2015-16", "2016-17", "2017-18", "2018-19", "2019-20",
     "2020-21", "2021-22", "2022-23", "2023-24", "2024-25"
 ]
-WINDOWS = [10, 20, 30, 40, "full"]
+WINDOWS = [10, 20, 30, 40, "full", "postAllStar"]
 SLEEP_BETWEEN_CALLS_SEC = 0.7  # Slightly higher for bulk requests
 OUTPUT_FILE = "historical_trends_data.json"
 
@@ -67,9 +67,16 @@ def rolling_mean(arr, window):
 # ----------------------------
 # Calculate Metrics for a Window
 # ----------------------------
-def calculate_windowed_metrics(off_ratings, def_ratings, window):
+def calculate_windowed_metrics(off_ratings, def_ratings, window, game_dates=None, cutoff_date=None):
     """Calculate rugosity, net rating, and trend score for a specific window."""
-    if window == "full":
+    if window == "postAllStar":
+        if game_dates is None or cutoff_date is None:
+            return None
+        # Filter to games on or after cutoff date
+        mask = [d >= cutoff_date for d in game_dates]
+        off_slice = [o for o, m in zip(off_ratings, mask) if m]
+        def_slice = [d for d, m in zip(def_ratings, mask) if m]
+    elif window == "full":
         off_slice = off_ratings
         def_slice = def_ratings
     else:
@@ -222,15 +229,23 @@ def fetch_season_data(season, team_list):
 
             off_ratings = df[off_col].tolist()
             def_ratings = df[def_col].tolist()
+            game_dates = pd.to_datetime(df[date_col]).tolist()
             games = len(off_ratings)
 
             if games < 10:  # Need at least 10 games for meaningful analysis
                 continue
 
+            # Post all-star cutoff: Feb 1 of the second year in the season
+            second_year = int("20" + season[5:7])
+            cutoff_date = pd.Timestamp(f"{second_year}-02-01")
+
             # Calculate metrics for each window
             windows_data = {}
             for window in WINDOWS:
-                metrics = calculate_windowed_metrics(off_ratings, def_ratings, window)
+                metrics = calculate_windowed_metrics(
+                    off_ratings, def_ratings, window,
+                    game_dates=game_dates, cutoff_date=cutoff_date
+                )
                 if metrics:
                     windows_data[str(window)] = metrics
 
@@ -679,6 +694,72 @@ def main():
     best_window = max(correlations.keys(),
                       key=lambda w: abs(correlations[w]["netRating_vs_playoffWins"]["r"]))
 
+    # Post All-Star vs Full Season comparison
+    print("\n" + "=" * 60)
+    print("POST ALL-STAR vs FULL SEASON: Playoff Prediction Comparison")
+    print("=" * 60)
+
+    post_asb_corr = correlations.get("postAllStar", {})
+    full_corr_data = correlations.get("full", {})
+
+    comparison = {}
+    if post_asb_corr and full_corr_data:
+        metrics_to_compare = [
+            ("netRating", "Net Rating"),
+            ("rugosity", "Consistency (Rugosity)"),
+            ("adjustedRating", "Adjusted Rating (Net/Rug)"),
+            ("weightedRating", "Weighted Rating (Net - Rug*0.5)"),
+            ("offLevel", "Offensive Rating"),
+            ("defLevel", "Defensive Rating"),
+            ("trendScore", "Trend Score"),
+        ]
+
+        print(f"\n  {'Metric':<35} {'Full Season':>12} {'Post-ASB':>12} {'Winner':>12}")
+        print("  " + "-" * 73)
+
+        for metric_key, metric_name in metrics_to_compare:
+            full_key = f"{metric_key}_vs_playoffWins"
+            full_r = full_corr_data.get(full_key, {}).get("r", 0)
+            full_p = full_corr_data.get(full_key, {}).get("p", 1)
+            post_r = post_asb_corr.get(full_key, {}).get("r", 0)
+            post_p = post_asb_corr.get(full_key, {}).get("p", 1)
+
+            winner = "Post-ASB" if abs(post_r) > abs(full_r) else "Full Season"
+            sig_full = "*" if full_p < 0.05 else ""
+            sig_post = "*" if post_p < 0.05 else ""
+
+            print(f"  {metric_name:<35} {full_r:+.3f}{sig_full:>2}     {post_r:+.3f}{sig_post:>2}     {winner}")
+
+            comparison[metric_key] = {
+                "fullSeason": {"r": full_r, "p": full_p},
+                "postAllStar": {"r": post_r, "p": post_p},
+                "winner": winner
+            }
+
+        print("\n  * = statistically significant (p < 0.05)")
+
+        # Playoff teams only comparison
+        full_po = full_corr_data.get("playoffTeamsOnly", {})
+        post_po = post_asb_corr.get("playoffTeamsOnly", {})
+        if full_po.get("sampleSize", 0) >= 10 and post_po.get("sampleSize", 0) >= 10:
+            print(f"\n  Among Playoff Teams Only (predicting deeper runs):")
+            print(f"  {'Metric':<35} {'Full Season':>12} {'Post-ASB':>12} {'Winner':>12}")
+            print("  " + "-" * 73)
+            for metric_key in ["netRating", "rugosity"]:
+                fk = f"{metric_key}_vs_wins"
+                full_r = full_po.get(fk, {}).get("r", 0)
+                post_r = post_po.get(fk, {}).get("r", 0)
+                winner = "Post-ASB" if abs(post_r) > abs(full_r) else "Full Season"
+                print(f"  {metric_key:<35} {full_r:+.3f}         {post_r:+.3f}         {winner}")
+
+        # Count which approach wins more
+        post_asb_wins = sum(1 for v in comparison.values() if v["winner"] == "Post-ASB")
+        full_wins = sum(1 for v in comparison.values() if v["winner"] == "Full Season")
+        overall_winner = "Post All-Star" if post_asb_wins > full_wins else "Full Season"
+
+        print(f"\n  VERDICT: {overall_winner} metrics are a stronger predictor of playoff success")
+        print(f"  (Post-ASB won {post_asb_wins}/{len(comparison)} metric comparisons)")
+
     # Summary statistics
     total_team_seasons = sum(len(s["teams"]) for s in all_seasons_data)
     playoff_teams_total = sum(1 for s in all_seasons_data for t in s["teams"] if t["madePlayoffs"])
@@ -692,6 +773,12 @@ def main():
     rugosity_better = bool(abs(full_corr.get("rugosity_vs_playoffWins", {}).get("r", 0)) > \
                       abs(full_corr.get("netRating_vs_playoffWins", {}).get("r", 0)))
 
+    # Determine if post all-star predicts better than full season
+    post_asb_better = bool(
+        abs(post_asb_corr.get("netRating_vs_playoffWins", {}).get("r", 0)) >
+        abs(full_corr.get("netRating_vs_playoffWins", {}).get("r", 0))
+    ) if post_asb_corr else False
+
     # Build output
     output = {
         "generated": pd.Timestamp.now().isoformat(),
@@ -701,12 +788,14 @@ def main():
         "correlations": correlations,
         "badgeAnalysis": badge_analysis,
         "archetypeAnalysis": archetype_analysis,
+        "postAllStarComparison": comparison,
         "summary": {
             "totalTeamSeasons": total_team_seasons,
             "playoffTeams": playoff_teams_total,
             "champions": champions,
             "bestCorrelationWindow": best_window,
-            "rugosityPredictsBetter": rugosity_better
+            "rugosityPredictsBetter": rugosity_better,
+            "postAllStarBetterThanFullSeason": post_asb_better
         }
     }
 
@@ -719,8 +808,9 @@ def main():
     print("COMPLETE!")
     print(f"  Total team-seasons: {total_team_seasons}")
     print(f"  Playoff appearances: {playoff_teams_total}")
-    print(f"  Best prediction window: Last {best_window} games")
+    print(f"  Best prediction window: {best_window}")
     print(f"  Rugosity predicts better than NetRating: {rugosity_better}")
+    print(f"  Post All-Star better than Full Season: {post_asb_better}")
     print("=" * 60)
 
 if __name__ == "__main__":

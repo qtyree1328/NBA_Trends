@@ -549,8 +549,8 @@
     <!-- Hero -->
     <section class="hero">
         <span class="hero-label">10 Seasons of Data</span>
-        <h1 class="hero-title"><span>Does Consistency<br>Win Championships?</span></h1>
-        <p class="hero-subtitle">Analyzing whether game-to-game consistency (rugosity) predicts playoff success better than raw performance metrics like net rating.</p>
+        <h1 class="hero-title"><span>What Predicts<br>Playoff Success?</span></h1>
+        <p class="hero-subtitle">Does post All-Star performance predict playoff success better than full-season metrics? Does consistency matter? 10 years of data, one answer.</p>
         <div class="hero-meta" id="heroMeta">
             <span><span class="dot"></span>Loading data...</span>
         </div>
@@ -577,6 +577,29 @@
                 </div>
             </section>
 
+            <!-- Post All-Star vs Full Season -->
+            <section class="section" id="postAsbSection">
+                <div class="section-header">
+                    <h2>Post All-Star vs Full Season</h2>
+                    <p>Is performance after the trade deadline a stronger indicator of playoff success?</p>
+                </div>
+                <div class="findings-grid" id="postAsbGrid">
+                    <!-- Populated by JS -->
+                </div>
+
+                <div class="chart-card" style="margin-top: 2rem;">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Correlation Comparison: Full Season vs Post All-Star</div>
+                            <div class="chart-card-subtitle">Which time period better predicts playoff wins?</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="postAsbChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
             <!-- Correlation Explorer -->
             <section class="section" id="correlationSection">
                 <div class="section-header">
@@ -599,6 +622,7 @@
                                     <option value="30" selected>Last 30 Games</option>
                                     <option value="40">Last 40 Games</option>
                                     <option value="full">Full Season</option>
+                                    <option value="postAllStar">Post All-Star (Feb 1+)</option>
                                 </select>
                             </div>
                             <div class="control-group">
@@ -942,6 +966,7 @@
         function renderAll() {
             renderHeroMeta();
             renderFindings();
+            renderPostAsbComparison();
             renderScatterChart();
             renderWindowChart();
             renderComparisonCharts();
@@ -1021,14 +1046,151 @@
                     <div class="finding-desc">The ${bestWindow === 'full' ? 'full season' : 'last ' + bestWindow + ' games'} provides the strongest correlation with playoff performance</div>
                 </div>
                 <div class="finding-card">
-                    <div class="finding-icon">🏆</div>
-                    <div class="finding-title">The Bottom Line</div>
-                    <div class="finding-value">${Math.abs(netR) > 0.5 ? 'Be Good' : 'Mixed'}</div>
-                    <div class="finding-desc">${Math.abs(netR) > Math.abs(rugR) * 2
-                        ? 'Being good (high net rating) matters far more than being consistent for playoff success.'
-                        : 'Both quality and consistency matter for playoff success.'}</div>
+                    <div class="finding-icon">*</div>
+                    <div class="finding-title">Post All-Star Edge?</div>
+                    <div class="finding-value ${historicalData.summary.postAllStarBetterThanFullSeason ? 'positive' : 'blue'}">
+                        ${historicalData.summary.postAllStarBetterThanFullSeason ? 'Yes' : 'No'}
+                    </div>
+                    <div class="finding-desc">${historicalData.summary.postAllStarBetterThanFullSeason
+                        ? 'Post All-Star performance is a better predictor of playoff success than full season metrics.'
+                        : 'Full season metrics remain a stronger predictor than post All-Star performance alone.'}</div>
                 </div>
             `;
+        }
+
+        // Render Post All-Star vs Full Season comparison
+        function renderPostAsbComparison() {
+            const comparison = historicalData.postAllStarComparison;
+            const fullCorr = historicalData.correlations['full'] || {};
+            const postCorr = historicalData.correlations['postAllStar'] || {};
+
+            if (!comparison || Object.keys(comparison).length === 0) {
+                document.getElementById('postAsbSection').style.display = 'none';
+                return;
+            }
+
+            // Summary cards
+            const netComp = comparison.netRating || {};
+            const rugComp = comparison.rugosity || {};
+            const adjComp = comparison.adjustedRating || {};
+
+            const fullNetR = netComp.fullSeason?.r || 0;
+            const postNetR = netComp.postAllStar?.r || 0;
+            const fullRugR = rugComp.fullSeason?.r || 0;
+            const postRugR = rugComp.postAllStar?.r || 0;
+
+            const postWins = Object.values(comparison).filter(v => v.winner === 'Post-ASB').length;
+            const totalMetrics = Object.keys(comparison).length;
+            const overallWinner = postWins > totalMetrics / 2 ? 'Post All-Star' : 'Full Season';
+
+            document.getElementById('postAsbGrid').innerHTML = `
+                <div class="finding-card">
+                    <div class="finding-icon">vs</div>
+                    <div class="finding-title">Net Rating Prediction</div>
+                    <div class="finding-value ${Math.abs(postNetR) > Math.abs(fullNetR) ? 'positive' : 'blue'}">
+                        Full: ${fullNetR >= 0 ? '+' : ''}${fullNetR.toFixed(3)} | Post-ASB: ${postNetR >= 0 ? '+' : ''}${postNetR.toFixed(3)}
+                    </div>
+                    <div class="finding-desc">${Math.abs(postNetR) > Math.abs(fullNetR)
+                        ? 'Post All-Star net rating is a stronger predictor of playoff success than full season.'
+                        : 'Full season net rating remains the stronger predictor of playoff success.'}</div>
+                </div>
+                <div class="finding-card">
+                    <div class="finding-icon">r</div>
+                    <div class="finding-title">Consistency Prediction</div>
+                    <div class="finding-value ${Math.abs(postRugR) > Math.abs(fullRugR) ? 'positive' : 'blue'}">
+                        Full: ${fullRugR >= 0 ? '+' : ''}${fullRugR.toFixed(3)} | Post-ASB: ${postRugR >= 0 ? '+' : ''}${postRugR.toFixed(3)}
+                    </div>
+                    <div class="finding-desc">${Math.abs(postRugR) > Math.abs(fullRugR)
+                        ? 'Post All-Star consistency is more predictive than full-season consistency.'
+                        : 'Full season consistency is more predictive than post All-Star consistency.'}</div>
+                </div>
+                <div class="finding-card">
+                    <div class="finding-icon">#</div>
+                    <div class="finding-title">Overall Verdict</div>
+                    <div class="finding-value ${overallWinner === 'Post All-Star' ? 'positive' : 'blue'}">${overallWinner}</div>
+                    <div class="finding-desc">${overallWinner === 'Post All-Star'
+                        ? `Post All-Star metrics won ${postWins}/${totalMetrics} comparisons. How teams play after trades and the break is a better indicator.`
+                        : `Full season metrics won ${totalMetrics - postWins}/${totalMetrics} comparisons. A larger sample size provides more reliable predictions.`}</div>
+                </div>
+            `;
+
+            // Bar chart comparing correlations
+            const metrics = [
+                { key: 'netRating', label: 'Net Rating' },
+                { key: 'adjustedRating', label: 'Adjusted Rating' },
+                { key: 'weightedRating', label: 'Weighted Rating' },
+                { key: 'rugosity', label: 'Rugosity' },
+                { key: 'offLevel', label: 'Off Rating' },
+                { key: 'defLevel', label: 'Def Rating' },
+                { key: 'trendScore', label: 'Trend Score' },
+            ];
+
+            const labels = metrics.map(m => m.label);
+            const fullValues = metrics.map(m => {
+                const c = comparison[m.key];
+                return c ? Math.abs(c.fullSeason?.r || 0) : 0;
+            });
+            const postValues = metrics.map(m => {
+                const c = comparison[m.key];
+                return c ? Math.abs(c.postAllStar?.r || 0) : 0;
+            });
+
+            const ctx = document.getElementById('postAsbChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Full Season |r|',
+                            data: fullValues,
+                            backgroundColor: 'rgba(74, 158, 255, 0.7)',
+                            borderColor: '#4a9eff',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                        },
+                        {
+                            label: 'Post All-Star |r|',
+                            data: postValues,
+                            backgroundColor: 'rgba(212, 168, 83, 0.7)',
+                            borderColor: '#d4a853',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#8a8f9d', font: { family: "'Source Sans 3', sans-serif" } }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1a1e28',
+                            titleColor: '#f0f0f0',
+                            bodyColor: '#8a8f9d',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: (item) => `${item.dataset.label}: ${item.raw.toFixed(3)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.03)' },
+                            ticks: { color: '#5a5f6d', font: { size: 11 } }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.03)' },
+                            ticks: { color: '#5a5f6d' },
+                            title: { display: true, text: 'Absolute Correlation |r|', color: '#5a5f6d' }
+                        }
+                    }
+                }
+            });
         }
 
         // Calculate Pearson correlation
@@ -1212,8 +1374,8 @@
             const ctx = document.getElementById('windowChart').getContext('2d');
             const correlations = historicalData.correlations;
 
-            const windows = ['10', '20', '30', '40', 'full'];
-            const windowLabels = ['Last 10', 'Last 20', 'Last 30', 'Last 40', 'Full Season'];
+            const windows = ['10', '20', '30', '40', 'full', 'postAllStar'];
+            const windowLabels = ['Last 10', 'Last 20', 'Last 30', 'Last 40', 'Full Season', 'Post All-Star'];
 
             const netRatingCorrs = windows.map(w =>
                 correlations[w] ? Math.abs(correlations[w].netRating_vs_playoffWins.r) : 0
