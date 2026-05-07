@@ -1,7 +1,25 @@
-To run this app, follow these steps:
+To update the site (nbatrends.com):
 
-./run_and_push.sh
+    ./run_and_push.sh          # routine update -- current season only (~3-5 min)
+    ./run_and_push.sh --full   # also refresh historical (~10-15 min)
 
-cd NBA_Trends
-conda activate rs_env
-python fetch_nba_data.py
+Either command:
+  - Refreshes regular-season data (window 5 + 7)
+  - Refreshes post-All-Star data (window 5 + 7)
+  - Validates each JSON output
+  - Commits and pushes to GitHub, which triggers GitHub Pages to redeploy
+
+--full additionally refreshes historical_trends_data.json (10 seasons x 6 windows).
+You only need this when:
+  - A season has just ended and you want it folded in
+  - Upstream NBA stats were corrected
+  - You added/changed seasons in fetch_historical_data.py
+
+Tunable env vars (defaults shown):
+    MAX_RETRIES=5
+    NBA_API_TIMEOUT=180
+    SLEEP_BETWEEN_CALLS_SEC=1.25
+    MIN_TEAMS_REQUIRED=25
+
+If the NBA API is rate-limiting:
+    MAX_RETRIES=10 ./run_and_push.sh

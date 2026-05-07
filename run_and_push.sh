@@ -6,6 +6,30 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+# --- Flags ---
+INCLUDE_HISTORICAL=0
+for arg in "$@"; do
+    case "$arg" in
+        --full|--historical)
+            INCLUDE_HISTORICAL=1
+            ;;
+        -h|--help)
+            cat <<USAGE
+Usage: $(basename "$0") [--full]
+
+  (no flag)   Refresh current-season data only (fast, ~3-5 min)
+  --full      Also refresh historical data (10 seasons x 6 windows, ~10-15 min)
+              Use when seasons change or stats are corrected upstream.
+USAGE
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument: $arg (try --help)" >&2
+            exit 1
+            ;;
+    esac
+done
+
 # Activate conda so we get the right Python with nba_api, pandas, etc.
 if [[ ! -x /opt/miniconda3/bin/conda ]]; then
     echo "[FAIL] Conda not found at /opt/miniconda3/bin/conda"
@@ -89,6 +113,44 @@ run_post_allstar 5
 
 echo ""
 run_post_allstar 7
+
+validate_historical() {
+    local file="historical_trends_data.json"
+    python - "$file" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+file_path = Path(sys.argv[1])
+if not file_path.exists():
+    raise SystemExit(f"[FAIL] Missing output file: {file_path}")
+
+data = json.loads(file_path.read_text())
+seasons = data.get("seasonsAnalyzed", [])
+windows = data.get("windows", [])
+if len(seasons) < 10:
+    raise SystemExit(
+        f"[FAIL] {file_path.name} has {len(seasons)} seasons; expected at least 10."
+    )
+if len(windows) < 6:
+    raise SystemExit(
+        f"[FAIL] {file_path.name} has {len(windows)} windows; expected at least 6."
+    )
+print(f"[OK] {file_path.name}: {len(seasons)} seasons, {len(windows)} windows")
+PY
+}
+
+if [[ "${INCLUDE_HISTORICAL}" -eq 1 ]]; then
+    echo ""
+    echo "=== Running historical fetch (10 seasons x 6 windows; this is the slow one) ==="
+    MAX_RETRIES="${MAX_RETRIES}" \
+    NBA_API_TIMEOUT="${NBA_API_TIMEOUT}" \
+    python fetch_historical_data.py
+    validate_historical
+else
+    echo ""
+    echo "[SKIP] Historical refresh -- pass --full to include it."
+fi
 
 echo ""
 echo "=== Committing and pushing ==="
